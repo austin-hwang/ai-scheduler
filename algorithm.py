@@ -11,100 +11,83 @@ class BacktrackingSearch():
         self.allAssignments = []
 
     def solve(self, csp, mcv = False, ac3 = False):
-            # CSP to be solved.
-            self.csp = csp
-
-            # Set the search heuristics requested asked.
-            self.mcv = mcv
-            self.ac3 = ac3
-
-            # The dictionary of domains of every variable in the CSP.
-            self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
-
-            # Perform backtracking search.
-            self.backtrack({}, 0, 1)
-            self.print_stats()
+        self.csp = csp
+        self.mcv = mcv
+        self.ac3 = ac3
+        self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
+        self.backtrack({}, 0, 1)
+        self.print_stats()
 
     def print_stats(self):
-            if self.optimalAssignment:
-                print "Found %d optimal assignments with weight %f in %d operations" % \
-                    (self.numOptimalAssignments, self.optimalWeight, self.numOperations)
-                print "First assignment took %d operations" % self.firstAssignmentNumOperations
+        if self.optimalAssignment:
+            print "Found %d optimal assignments with weight %f in %d operations" % \
+                (self.numOptimalAssignments, self.optimalWeight, self.numOperations)
+            print "First assignment took %d operations" % self.firstAssignmentNumOperations
+        else:
+            print "No solution was found."
+
+
+    def new_weight(self, assignment, var, val):
+        w = 1.0
+        if self.csp.unaryFactors[var]:
+            w *= self.csp.unaryFactors[var][val]
+            if w == 0: 
+                return w
+        for var2, factor in self.csp.binaryFactors[var].iteritems():
+            if var2 not in assignment: 
+                continue  
+            w *= factor[val][assignment[var2]]
+            if w == 0: 
+                return w
+        return w
+
+    def reset(self, assignment, weight):
+        self.numAssignments += 1
+        newAssignment = {}
+        for var in self.csp.variables:
+            newAssignment[var] = assignment[var]
+        self.allAssignments.append(newAssignment)
+
+        if len(self.optimalAssignment) == 0 or weight >= self.optimalWeight:
+            if weight == self.optimalWeight:
+                self.numOptimalAssignments += 1
             else:
-                print "No solution was found."
+                self.numOptimalAssignments = 1
+            self.optimalWeight = weight
 
-
-    def get_delta_weight(self, assignment, var, val):
-            assert var not in assignment
-            w = 1.0
-            if self.csp.unaryFactors[var]:
-                w *= self.csp.unaryFactors[var][val]
-                if w == 0: return w
-            for var2, factor in self.csp.binaryFactors[var].iteritems():
-                if var2 not in assignment: continue  # Not assigned yet
-                w *= factor[val][assignment[var2]]
-                if w == 0: return w
-            return w
+            self.optimalAssignment = newAssignment
+            if self.firstAssignmentNumOperations == 0:
+                self.firstAssignmentNumOperations = self.numOperations
 
     def backtrack(self, assignment, numAssigned, weight):
-            self.numOperations += 1
-            assert weight > 0
-            if numAssigned == self.csp.numVars:
-                # A satisfiable solution have been found. Update the statistics.
-                self.numAssignments += 1
-                newAssignment = {}
-                for var in self.csp.variables:
-                    newAssignment[var] = assignment[var]
-                self.allAssignments.append(newAssignment)
+        self.numOperations += 1
+        if numAssigned == self.csp.numVars:
+            self.reset(assignment, weight)
+            return
 
-                if len(self.optimalAssignment) == 0 or weight >= self.optimalWeight:
-                    if weight == self.optimalWeight:
-                        self.numOptimalAssignments += 1
-                    else:
-                        self.numOptimalAssignments = 1
-                    self.optimalWeight = weight
+        var = self.next_variable(assignment)
+        ordered_values = self.domains[var]
 
-                    self.optimalAssignment = newAssignment
-                    if self.firstAssignmentNumOperations == 0:
-                        self.firstAssignmentNumOperations = self.numOperations
-                return
+        if not self.ac3:
+            for val in ordered_values:
+                newWeight = self.new_weight(assignment, var, val)
+                if newWeight > 0:
+                    assignment[var] = val
+                    self.backtrack(assignment, numAssigned + 1, weight * newWeight)
+                    del assignment[var]
+        else:
+            for val in ordered_values:
+                newWeight = self.new_weight(assignment, var, val)
+                if newWeight > 0:
+                    assignment[var] = val
+                    localCopy = copy.deepcopy(self.domains)
+                    self.domains[var] = [val]
+                    self.arc_consistency(var)
+                    self.backtrack(assignment, numAssigned + 1, weight * newWeight)
+                    self.domains = localCopy
+                    del assignment[var]
 
-            # Select the next variable to be assigned.
-            var = self.get_unassigned_variable(assignment)
-            # Get an ordering of the values.
-            ordered_values = self.domains[var]
-
-            # Continue the backtracking recursion using |var| and |ordered_values|.
-            if not self.ac3:
-                # When arc consistency check is not enabled.
-                for val in ordered_values:
-                    deltaWeight = self.get_delta_weight(assignment, var, val)
-                    if deltaWeight > 0:
-                        assignment[var] = val
-                        self.backtrack(assignment, numAssigned + 1, weight * deltaWeight)
-                        del assignment[var]
-            else:
-                # Arc consistency check is enabled.
-                for val in ordered_values:
-                    deltaWeight = self.get_delta_weight(assignment, var, val)
-                    if deltaWeight > 0:
-                        assignment[var] = val
-                        # create a deep copy of domains as we are going to look
-                        # ahead and change domain values
-                        localCopy = copy.deepcopy(self.domains)
-                        # fix value for the selected variable so that hopefully we
-                        # can eliminate values for other variables
-                        self.domains[var] = [val]
-
-                        # enforce arc consistency
-                        self.arc_consistency_check(var)
-
-                        self.backtrack(assignment, numAssigned + 1, weight * deltaWeight)
-                        # restore the previous domains
-                        self.domains = localCopy
-                        del assignment[var]
-
-    def get_unassigned_variable(self, assignment):
+    def next_variable(self, assignment):
         if not self.mcv:
             for var in self.csp.variables:
                 if var not in assignment: return var
@@ -114,25 +97,30 @@ class BacktrackingSearch():
                 if var not in assignment:
                     possibleValues = 0
                     for val in self.domains[var]:
-                        result = self.get_delta_weight(assignment, var, val)
+                        result = self.new_weight(assignment, var, val)
                         possibleValues = possibleValues + result
                     varConstraintList.append((var,possibleValues))
             varConstraintList.sort(key=lambda x: x[1])
             return varConstraintList[0][0]
+    
+    def arc_consistency(self, var1):
+        queue = [var1]
+        while queue:
+            arc = queue.pop(0)
+            for val1 in self.domains[arc]:
+                if self.csp.unaryFactors[arc] != None:
+                    if self.csp.unaryFactors[arc][val1] == 0:
+                        self.domains[arc].remove(val1)
+                        queue.append(arc)
+            for var2 in self.csp.get_neighbors(arc):
+                for val2 in self.domains[var2]:   
+                    if self.revise(arc, var2, val2):
+                        self.domains[var2].remove(val2)
+                        queue.append(var2)
 
-    def arc_consistency_check(self, var1):
+    def revise(self, var1, var2, val2):
         for val1 in self.domains[var1]:
-            if self.csp.unaryFactors[var1] != None:
-                if self.csp.unaryFactors[var1][val1] == 0:
-                    self.domains[var1].remove(val1)
-                    self.arc_consistency_check(var1)
-        consistent = False
-        for var2 in self.csp.get_neighbor_vars(var1):
-            for val2 in self.domains[var2]:
-                for val1 in self.domains[var1]:
-                    if self.csp.binaryFactors[var1][var2] != None:
-                        if self.csp.binaryFactors[var1][var2][val1][val2] != 0:
-                            consistent = True
-                if consistent == False:
-                    self.domains[var2].remove(val2)
-                    self.arc_consistency_check(var2)
+            if self.csp.binaryFactors[var1][var2] != None:
+                if self.csp.binaryFactors[var1][var2][val1][val2] != 0:
+                    return False
+        return True

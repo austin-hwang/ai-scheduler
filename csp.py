@@ -19,31 +19,21 @@ class CSP:
         self.binaryFactors[var] = dict()
 
 
-    def get_neighbor_vars(self, var):
+    def get_neighbors(self, var):
         return self.binaryFactors[var].keys()
 
     def add_unary_factor(self, var, factorFunc):
-        factor = {val:float(factorFunc(val)) for val in self.values[var]}
+        factor = {val: float(factorFunc(val)) for val in self.values[var]}
         if self.unaryFactors[var] is not None:
-            assert len(self.unaryFactors[var]) == len(factor)
-            self.unaryFactors[var] = {val:self.unaryFactors[var][val] * \
-                factor[val] for val in factor}
+            self.unaryFactors[var] = {val: self.unaryFactors[var][val] * factor[val] for val in factor}
         else:
             self.unaryFactors[var] = factor
 
     def add_binary_factor(self, var1, var2, factor_func):
-        try:
-            assert var1 != var2
-        except:
-            print 'You are adding a binary factor over a same variable... '
-            raise
-
         self.update_binary_factor_table(var1, var2,
-            {val1: {val2: float(factor_func(val1, val2)) \
-                for val2 in self.values[var2]} for val1 in self.values[var1]})
+            {val1: {val2: float(factor_func(val1, val2)) for val2 in self.values[var2]} for val1 in self.values[var1]})
         self.update_binary_factor_table(var2, var1, \
-            {val2: {val1: float(factor_func(val1, val2)) \
-                for val1 in self.values[var1]} for val2 in self.values[var2]})
+            {val2: {val1: float(factor_func(val1, val2)) for val1 in self.values[var1]} for val2 in self.values[var2]})
 
     def update_binary_factor_table(self, var1, var2, table):
         if var2 not in self.binaryFactors[var1]:
@@ -52,7 +42,6 @@ class CSP:
             currentTable = self.binaryFactors[var1][var2]
             for i in table:
                 for j in table[i]:
-                    assert i in currentTable and j in currentTable[i]
                     currentTable[i][j] *= table[i][j]
 
 def weights(x, lower, upper):
@@ -77,6 +66,12 @@ def create_schedule():
     return csp
 
 search = algorithm.BacktrackingSearch()
+print "Without AC"
 search.solve(create_schedule())
+print "Optimal Assignments: ", search.optimalAssignment
+print "All Assignments: ", search.allAssignments
+
+print "With AC"
+search.solve(create_schedule(), ac3=True)
 print "Optimal Assignments: ", search.optimalAssignment
 print "All Assignments: ", search.allAssignments
