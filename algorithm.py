@@ -29,11 +29,11 @@ class BacktrackingSearch():
 
 
     def new_weight(self, assignment, var, val, weight):
-        if self.csp.unaryFactors[var]:
-            weight *= self.csp.unaryFactors[var][val]
+        if self.csp.unaryConstraints[var]:
+            weight *= self.csp.unaryConstraints[var][val]
             if not weight: 
                 return weight
-        for var2, factor in self.csp.binaryFactors[var].iteritems():
+        for var2, factor in self.csp.binaryConstraints[var].iteritems():
             if var2 in assignment: 
                 weight *= factor[val][assignment[var2]]
                 if not weight: 
@@ -100,7 +100,7 @@ class BacktrackingSearch():
                 possibleValues = 0
                 for val in self.domains[var]:
                     result = self.new_weight(assignment, var, val, 1.0)
-                    possibleValues = possibleValues + result
+                    possibleValues += result
                 varConstraintList.append((var,possibleValues))
         varConstraintList.sort(key = lambda x: x[1])
         return varConstraintList[0][0]
@@ -110,8 +110,8 @@ class BacktrackingSearch():
         while queue:
             arc = queue.pop(0)
             for val1 in self.domains[arc]:
-                if self.csp.unaryFactors[arc] is not None:
-                    if self.csp.unaryFactors[arc][val1] == 0:
+                if self.csp.unaryConstraints[arc] is not None:
+                    if self.csp.unaryConstraints[arc][val1] == 0:
                         self.domains[arc].remove(val1)
                         queue.append(arc)
             for var2 in self.csp.get_neighbors(arc):
@@ -122,8 +122,8 @@ class BacktrackingSearch():
 
     def revise(self, var1, var2, val2):
         for val1 in self.domains[var1]:
-            if self.csp.binaryFactors[var1][var2] is not None:
-                if self.csp.binaryFactors[var1][var2][val1][val2]:
+            if self.csp.binaryConstraints[var1][var2] is not None:
+                if self.csp.binaryConstraints[var1][var2][val1][val2]:
                     return False
         return True
 
@@ -153,9 +153,9 @@ class LocalSearch():
         for val in self.csp.domain:
             tempScore = 0
             for var1 in self.csp.variables:
-                tempScore += self.csp.unaryFactors[var1][val]
-                for var2 in self.csp.binaryFactors[var1]:
-                    tempScore += self.csp.binaryFactors[var1][var2][val][val]
+                tempScore += self.csp.unaryConstraints[var1][val]
+                for var2 in self.csp.binaryConstraints[var1]:
+                    tempScore += self.csp.binaryConstraints[var1][var2][val][val]
             if tempScore > score[0] and val not in assignment:
                 score = (tempScore, val)
         return score
