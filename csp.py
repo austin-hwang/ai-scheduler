@@ -3,20 +3,21 @@ import json, re, sys, algorithm
 class CSP:
     def __init__(self):
         self.numVars = 0
+        self.numEvents = 5
         self.variables = []
         self.values = {}
         self.unaryFactors = {}
         self.binaryFactors = {}
+        self.domain = []
 
     def add_variable(self, var, domain):
-        if var in self.variables:
-            raise Exception("Variable name already exists: %s" % str(var))
-
-        self.numVars += 1
-        self.variables.append(var)
-        self.values[var] = domain
-        self.unaryFactors[var] = None
-        self.binaryFactors[var] = dict()
+        if var not in self.variables:
+            self.numVars += 1
+            self.variables.append(var)
+            self.values[var] = domain
+            self.domain = domain
+            self.unaryFactors[var] = None
+            self.binaryFactors[var] = {}
 
 
     def get_neighbors(self, var):
@@ -30,7 +31,7 @@ class CSP:
             self.unaryFactors[var] = factor
 
     def add_binary_factor(self, var1, var2, factor_func):
-        self.update_binary_factor_table(var1, var2,
+        self.update_binary_factor_table(var1, var2, \
             {val1: {val2: float(factor_func(val1, val2)) for val2 in self.values[var2]} for val1 in self.values[var1]})
         self.update_binary_factor_table(var2, var1, \
             {val2: {val1: float(factor_func(val1, val2)) for val1 in self.values[var1]} for val2 in self.values[var2]})
@@ -52,9 +53,9 @@ def weights(x, lower, upper):
 
 def create_schedule():
     csp = CSP()
-    csp.add_variable('A', [x for x in range(6)])
-    csp.add_variable('B', [x for x in range(6)])
-    csp.add_variable('C', [x for x in range(6)])
+    csp.add_variable('A', [x for x in range(23)])
+    csp.add_variable('B', [x for x in range(23)])
+    csp.add_variable('C', [x for x in range(23)])
     csp.add_unary_factor('A', lambda x : weights(x, 1, 5))
     csp.add_unary_factor('B', lambda x : x != 1 and x != 3 and x !=2)
     csp.add_unary_factor('C', lambda x : x != 4 and x != 3)
@@ -66,12 +67,11 @@ def create_schedule():
     return csp
 
 search = algorithm.BacktrackingSearch()
-print "Without AC"
-search.solve(create_schedule())
-print "Optimal Assignments: ", search.optimalAssignment
+print "With AC"
+search.solve(create_schedule(), True, True)
+print "Optimal Assignments: ", search.bestAssignment
 print "All Assignments: ", search.allAssignments
 
-print "With AC"
-search.solve(create_schedule(), ac3=True)
-print "Optimal Assignments: ", search.optimalAssignment
-print "All Assignments: ", search.allAssignments
+print "Local search"
+search_local = algorithm.LocalSearch()
+search_local.solve(create_schedule())
