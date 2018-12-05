@@ -1,5 +1,5 @@
-import copy, random 
-
+import copy, random, math
+probs = []
 class BacktrackingSearch():
     def __init__(self):
         self.bestAssignment = {}
@@ -127,8 +127,9 @@ class BacktrackingSearch():
                     return False
         return True
 
-class LocalSearch():
-    def __init__(self):
+# Simulated Annealing
+class SA():
+    def __init__(self, csp):
         self.bestAssignment = []
         self.optimalWeight = 0
         self.numbestAssignments = 0
@@ -136,11 +137,14 @@ class LocalSearch():
         self.numOperations = 0
         self.firstAssignmentNumOperations = 0
         self.allAssignments = []
+        self.csp = csp
+        self.conflictPairs = []
+        self.numDays = csp.numDays
+        self.dayLength = csp.dayLength
 
     def solve(self, csp):
         self.csp = csp
         self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
-        self.min_conflicts(100)
         self.print_stats()
 
     def print_stats(self):
@@ -148,22 +152,106 @@ class LocalSearch():
             (self.numbestAssignments, self.optimalWeight, self.numOperations)
         print "First assignment took %d operations" % self.firstAssignmentNumOperations
 
-    def num_conflicts(self, assignment):
-        score = (0, None)
-        for val in self.csp.domain:
-            tempScore = 0
-            for var1 in self.csp.variables:
-                tempScore += self.csp.unaryConstraints[var1][val]
-                for var2 in self.csp.binaryConstraints[var1]:
-                    tempScore += self.csp.binaryConstraints[var1][var2][val][val]
-            if tempScore > score[0] and val not in assignment:
-                score = (tempScore, val)
+    def num_conflicts(self, assignment, duration):
+        events = assignment[0]
+        people = assignment[1]
+        score = 0
+
+        # Can't assign conflict pairs
+        for p in self.conflictPairs:
+            group1 = self.getTimePeriodsInDuration(events[p[0]], duration[p[0]])
+            group2 = self.getTimePeriodsInDuration(events[p[1]], duration[p[1]])
+            inBothLists = set(group1) & set(group2)
+            if(inBothLists):
+                return -1
+
+        for i, e in enumerate(events):
+            for p in people[i]:
+                timePeriods = self.getTimePeriodsInDuration(e, duration[i])
+                if(len(timePeriods) == 0):
+                    return -1
+                for t in timePeriods:
+                    score += self.csp.unaryConstraints[p][t[0]][t[1]]
         return score
 
-    def min_conflicts(self, max_steps):
-        assignment = random.sample(range(0, 23), self.csp.numEvents) 
-        for _ in range(max_steps):
-            randIndex = random.randint(0,self.csp.numEvents-1)
-            assignment[randIndex] = self.num_conflicts(assignment)[1]
-        self.bestAssignment = assignment
-        print self.bestAssignment
+    def getTimePeriodsInDuration(self, start, duration):
+        timePeriods = [start]
+        currPeriod = start
+        for i in range(duration - 1):
+            if(currPeriod[1] + 1 >= self.dayLength):
+                currPeriod = (currPeriod[0] + 1, 0)
+            else:
+                currPeriod = (currPeriod[0], currPeriod[1] + 1)
+            if(currPeriod[0] == self.numDays):
+                return []
+            timePeriods.append(currPeriod)
+        return timePeriods
+
+    def setConflictPairs(self, people):
+        pairs = []
+        for i in range(len(people)):
+            for j in range(i + 1, len(people)):
+                combinedList = people[i] + people[j]
+                if (len(combinedList) > len(set(combinedList))):
+                    pairs.append([i, j])
+        self.conflictPairs = pairs
+
+    def getNeighbor(self, assignment):
+        events = assignment[0]
+        eventNum = int(random.random() * len(events))
+        dayOrTime = int(random.random() * 2)
+        time = events[eventNum]
+        shift = random.sample([-1, 1], 1)
+        if(dayOrTime == 0):
+            newTime = ((time[dayOrTime] + shift[0]) % self.numDays, time[1])
+        else:
+            newTime = (time[0], (time[dayOrTime] + shift[0]) % self.dayLength)
+        events[events.index(time)] = newTime
+        return [events, assignment[1]]
+
+    def simulatedAnnealing(self, people, sampleNewEvents, durations):
+        randRestarts = 100
+        trials = 300
+        self.setConflictPairs(people)
+        bestEvents = sampleNewEvents(self.numDays, self.dayLength, len(people))
+        bestScore = 0
+        for it in range(randRestarts):
+            currEvents = sampleNewEvents(self.numDays, self.dayLength, len(people))
+            prevConflicts = 0
+            T = 1000.0
+            DECAY = 0.98
+
+            conflictsList = []
+            assignList = []
+            for t in range(trials):
+                nextAssign = self.getNeighbor([currEvents, people])
+                conflicts = self.num_conflicts(nextAssign, durations)
+                if(conflicts < 0):
+                    continue
+
+                if(self.acceptBag(conflicts, prevConflicts, T) > 0.99):
+                    prevConflicts = conflicts
+                    currAssign = nextAssign
+                    conflictsList.append(conflicts)
+                    assignList.append(copy.deepcopy(currAssign))
+
+                # Update temperature
+                T *= DECAY
+
+            index = conflictsList.index(max(conflictsList))
+            highScore = max(conflictsList)
+            if (highScore > bestScore):
+                bestScore = highScore
+                bestEvents = assignList[index]
+
+        return bestScore, bestEvents
+
+    def acceptBag(self, newVal, oldVal, T):
+        # Accept if val is better
+        if(newVal > oldVal):
+            return 1
+        else:
+            #return random.random()
+            from numpy.random import choice
+            #probs.append(1 - math.exp(-(oldVal - newVal) / (T * oldVal)))
+            return choice([0, 1], 1, [math.exp(-(oldVal - newVal) / (T * oldVal)), 1 - math.exp(-(oldVal - newVal) / (T * oldVal))])[0]
