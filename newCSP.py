@@ -1,13 +1,15 @@
-import algorithm
+import algorithm, json
 
 class CSP:
     def __init__(self, numDays, dayLength):
         self.numVars = 0
-        self.numEvents = 5
+        self.numEvents = 3
+        self.events = {}
         self.variables = []
         self.values = {}
         self.unaryConstraints = {}
         self.binaryConstraints = {}
+        self.eventConstraints = {}
         self.domain = []
         self.numDays = numDays
         self.dayLength = dayLength
@@ -41,6 +43,16 @@ class CSP:
         for key in varMapDict:
             self.updateUnaryDomainVals(key, varMapDict[key])
 
+    def updateEventConstraints(self):
+        for people in self.unaryConstraints.iteritems():
+            for days in people[1].iteritems():
+                for hours in days[1].iteritems():
+                    if hours[1] <= 0:
+                        for event in self.events.iteritems():
+                            if people[0] in event[1]:
+                                self.eventConstraints[event[0]].add((days[0], hours[0]))
+
+
 def create_schedule(people, numDays, dayLength):
     csp = CSP(numDays, dayLength)
     peopleFlat = [item for sublist in people for item in sublist]
@@ -53,12 +65,27 @@ def create_schedule(people, numDays, dayLength):
             for d in range(csp.dayLength):
                 dict[x][d] = 1
         csp.add_variable(peopleFlat[i], dict)
+    for i, val in enumerate(people):
+        csp.events[i] = val
 
+    csp.eventConstraints = {e[0]: set() for e in csp.events.iteritems()}
     # Set variable constraints
     varMap1 = csp.getVarMapping(['A', 'C', 'D'], [5], range(0, csp.dayLength), 20)
+    varMap2 = csp.getVarMapping(['A'], range(csp.numDays), range(1,6), -10000)
     #varMap2 = csp.getVarMapping(['A', 'C', 'D'], range(0,6), range(11,3), 3)
     csp.updateUnaryWithVarMaps(varMap1)
-    #csp.updateUnaryWithVarMaps(varMap2)
+    csp.updateUnaryWithVarMaps(varMap2)
+    csp.updateEventConstraints()
+    # print "Unary: ", json.dumps(csp.unaryConstraints, indent = 2)
+    # for people in csp.unaryConstraints.iteritems():
+    #     for days in people[1].iteritems():
+    #         for hours in days[1].iteritems():
+    #             print hours
+    #print "Variables: ", csp.variables
+    # #csp.updateUnaryWithVarMaps(varMap2)
+    # print "Domain: ", csp.domain
+    print csp.events
+    print csp.eventConstraints
     return csp
 
 import random
@@ -66,8 +93,12 @@ def sampleNewEvents(numDays, numHours, numSample):
     return random.sample([(d, h) for d in range(numDays) for h in range(numHours)], numSample)
 
 # List of people
-people = [['A', 'B', 'C', 'G'], ['G', 'D', 'E', 'F'], ['A', 'G', 'H']]
-sa = algorithm.SA(create_schedule(people, numDays=7, dayLength=48))
-durations = [5, 5, 5]
-ret = sa.simulatedAnnealing(people, sampleNewEvents, durations)
-print(ret)
+events = [['A', 'B', 'C', 'G'], ['G', 'D', 'E', 'F'], ['A', 'G', 'H']]
+# events = [['A','C','D'], ['G', 'D', 'E', 'F']]
+# sa = algorithm.SA(create_schedule(events, numDays=7, dayLength=48))
+# durations = [5, 5, 5]
+# ret = sa.simulatedAnnealing(events, sampleNewEvents, durations)
+# print(ret)
+print "Hello"
+bt = algorithm.BacktrackingSearch()
+bt.solve(create_schedule(events, numDays=7, dayLength=24), mcv=False, ac3=False)

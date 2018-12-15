@@ -9,13 +9,13 @@ class BacktrackingSearch():
         self.numAssignments = 0
         self.numOperations = 0
         self.firstAssignmentNumOperations = 0
+        self.totalWeight = 0;
 
     def solve(self, csp, mcv, ac3):
         self.csp = csp
         self.mcv = mcv
         self.ac3 = ac3
         self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
-        print "CSP: ", self.csp.values
         self.backtrack({}, 0, 1)
         self.print_stats()
 
@@ -24,27 +24,28 @@ class BacktrackingSearch():
             print "Found %d optimal assignments with weight %f in %d operations" % \
                 (self.numbestAssignments, self.optimalWeight, self.numOperations)
             print "First assignment took %d operations" % self.firstAssignmentNumOperations
+            print "Best assignment: ", self.bestAssignment
         else:
             print "No solution was found."
 
 
-    def new_weight(self, assignment, var, val, weight):
-        if self.csp.unaryConstraints[var]:
-            weight *= self.csp.unaryConstraints[var][val]
-            if not weight: 
-                return weight
-        for var2, factor in self.csp.binaryConstraints[var].iteritems():
-            if var2 in assignment: 
-                weight *= factor[val][assignment[var2]]
-                if not weight: 
-                    return weight
+    def new_weight(self, event, day, hour):
+        weight = 0
+        # print "Var: ", var
+        # print "Day: ", day
+        # print "Hour: ", hour
+        for var in event[1]:
+            if (day, hour) in self.csp.eventConstraints[event[0]]:
+                return 0
+            else:
+                weight += self.csp.unaryConstraints[var][day][hour]
         return weight
 
     def reset(self, assignment, weight):
         self.numAssignments += 1
         newAssignment = {}
-        for var in self.csp.variables:
-            newAssignment[var] = assignment[var]
+        for event in self.csp.events.iteritems():
+            newAssignment[event[0]] = assignment[event[0]]
         self.allAssignments.append(newAssignment)
 
         if len(self.bestAssignment) == 0 or weight >= self.optimalWeight:
@@ -57,41 +58,52 @@ class BacktrackingSearch():
             self.bestAssignment = newAssignment
             if self.firstAssignmentNumOperations == 0:
                 self.firstAssignmentNumOperations = self.numOperations
+        # print "Best Assignment: ", self.bestAssignment, self.optimalWeight
 
     def backtrack(self, assignment, numAssigned, weight):
+        # print self.numOperations
         self.numOperations += 1
-        if numAssigned == self.csp.numVars:
+        if numAssigned == self.csp.numEvents:
             self.reset(assignment, weight)
         else:
-            var = self.next_variable(assignment)
-            ordered_values = self.domains[var]
-
+            event = self.next_event(assignment)
+            # var = self.next_variable(assignment, event)
+            # ordered_values = self.domains[var]
             if not self.ac3:
-                for val in ordered_values:
-                    newWeight = self.new_weight(assignment, var, val, 1.0)
-                    if newWeight > 0:
-                        assignment[var] = val
-                        self.backtrack(assignment, numAssigned + 1, weight * newWeight)
-                        del assignment[var]
+                for day in self.csp.domain.iteritems():
+                    for hour in day[1].keys():
+                        newWeight = self.new_weight(event, day[0], hour)
+                        if newWeight >= 1 and (day[0], hour) not in assignment.values():
+                            assignment[event[0]] = (day[0], hour)
+                            self.backtrack(assignment, numAssigned + 1, weight + newWeight)
+                            # print assignment
+                            del assignment[event[0]]
+                            # print "Deleted: ", assignment
             else:
-                for val in ordered_values:
-                    newWeight = self.new_weight(assignment, var, val, 1.0)
-                    if newWeight > 0:
-                        assignment[var] = val
-                        localCopy = copy.deepcopy(self.domains)
-                        self.domains[var] = [val]
-                        self.arc_consistency(var)
-                        self.backtrack(assignment, numAssigned + 1, weight * newWeight)
-                        self.domains = localCopy
-                        del assignment[var]
+                for day in self.csp.domain.iteritems():
+                    for hour in day[1].keys():
+                        newWeight = self.new_weight(event, day[0], hour)
+                        if newWeight >= 1 and (day[0], hour) not in assignment.values():
+                            assignment[event[0]] = (day[0], hour)
+                            localCopy = copy.deepcopy(self.domains)
+                            self.domains[var] = [val]
+                            self.arc_consistency(var)
+                            self.backtrack(assignment, numAssigned + 1, weight * newWeight)
+                            self.domains = localCopy
+                            del assignment[var]
 
-    def next_variable(self, assignment):
+    def next_variable(self, assignment, event):
         if self.mcv:
             return self.most_constrained_variable(assignment)
         else:
             for var in self.csp.variables:
-                if var not in assignment: 
+                if var in event: 
                     return var
+
+    def next_event(self, assignment):
+        for event in self.csp.events.iteritems():
+            if event[0] not in assignment:
+                return event
     
     def most_constrained_variable(self, assignment):
         varConstraintList = []
@@ -109,11 +121,10 @@ class BacktrackingSearch():
         queue = [var1]
         while queue:
             arc = queue.pop(0)
-            for val1 in self.domains[arc]:
-                if self.csp.unaryConstraints[arc] is not None:
-                    if self.csp.unaryConstraints[arc][val1] == 0:
-                        self.domains[arc].remove(val1)
-                        queue.append(arc)
+            # for val1 in self.csp.domain[arc]
+            #     if self.csp.unaryConstraints[arc][day][hour] == 0:
+            #         self.domains[arc].remove(val1)
+            #         queue.append(arc)
             for var2 in self.csp.get_neighbors(arc):
                 for val2 in self.domains[var2]:   
                     if self.revise(arc, var2, val2):
@@ -237,7 +248,6 @@ class SA():
 
                 # Update temperature
                 T *= DECAY
-
             index = conflictsList.index(max(conflictsList))
             highScore = max(conflictsList)
             if (highScore > bestScore):
