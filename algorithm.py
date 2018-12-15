@@ -11,10 +11,11 @@ class BacktrackingSearch():
         self.firstAssignmentNumOperations = 0
         self.totalWeight = 0;
 
-    def solve(self, csp, mcv, ac3):
+    def solve(self, csp, mcv, hwv, ac3):
         self.csp = csp
         self.mcv = mcv
         self.ac3 = ac3
+        self.hwv = hwv
         self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
         self.backtrack({}, 0, 1)
         self.print_stats()
@@ -68,17 +69,16 @@ class BacktrackingSearch():
         else:
             event = self.next_event(assignment)
             # var = self.next_variable(assignment, event)
-            # ordered_values = self.domains[var]
+            values = self.highest_weighted_value(event)
             if not self.ac3:
-                for day in self.csp.domain.iteritems():
-                    for hour in day[1].keys():
-                        newWeight = self.new_weight(event, day[0], hour)
-                        if newWeight >= 1 and (day[0], hour) not in assignment.values():
-                            assignment[event[0]] = (day[0], hour)
-                            self.backtrack(assignment, numAssigned + 1, weight + newWeight)
-                            # print assignment
-                            del assignment[event[0]]
-                            # print "Deleted: ", assignment
+                for day, hour in values:
+                    newWeight = self.new_weight(event, day, hour)
+                    if newWeight >= 1 and (day, hour) not in assignment.values():
+                        assignment[event[0]] = (day, hour)
+                        self.backtrack(assignment, numAssigned + 1, weight + newWeight)
+                        # print assignment
+                        del assignment[event[0]]
+                        # print "Deleted: ", assignment
             else:
                 for day in self.csp.domain.iteritems():
                     for hour in day[1].keys():
@@ -92,30 +92,45 @@ class BacktrackingSearch():
                             self.domains = localCopy
                             del assignment[var]
 
-    def next_variable(self, assignment, event):
-        if self.mcv:
-            return self.most_constrained_variable(assignment)
-        else:
-            for var in self.csp.variables:
-                if var in event: 
-                    return var
+    # def next_variable(self, assignment, event):
+    #     if self.mcv:
+    #         return self.most_constrained_variable(assignment)
+    #     else:
+    #         for var in self.csp.variables:
+    #             if var in event: 
+    #                 return var
 
     def next_event(self, assignment):
+        if self.mcv:
+            return self.most_constrained_variable(assignment)
         for event in self.csp.events.iteritems():
             if event[0] not in assignment:
                 return event
     
     def most_constrained_variable(self, assignment):
-        varConstraintList = []
-        for var in self.csp.variables:
-            if var not in assignment:
-                possibleValues = 0
-                for val in self.domains[var]:
-                    result = self.new_weight(assignment, var, val, 1.0)
-                    possibleValues += result
-                varConstraintList.append((var,possibleValues))
-        varConstraintList.sort(key = lambda x: x[1])
-        return varConstraintList[0][0]
+        most_constrained = []
+        for event in self.csp.events.iteritems():
+            if event[0] not in assignment:
+                most_constrained.append((event, len(self.csp.eventConstraints[event[0]])))
+        return max(most_constrained, key=lambda x:x[1])[0]
+
+    def highest_weighted_value(self, event):
+        ordered_values = {}
+        for people in self.csp.unaryConstraints.iteritems():
+            if people[0] in event[1]:
+                for days in people[1].iteritems():
+                    for hours in days[1].iteritems():
+                        if (days[0], hours[0]) in ordered_values:
+                            ordered_values[(days[0], hours[0])] += hours[1]
+                        else:
+                            ordered_values[(days[0], hours[0])] = hours[1]
+                if not self.hwv:
+                    return list(ordered_values)
+        return sorted(ordered_values, key=ordered_values.__getitem__, reverse=True)
+
+
+
+
     
     def arc_consistency(self, var1):
         queue = [var1]

@@ -70,11 +70,17 @@ def create_schedule(people, numDays, dayLength):
 
     csp.eventConstraints = {e[0]: set() for e in csp.events.iteritems()}
     # Set variable constraints
-    varMap1 = csp.getVarMapping(['A', 'C', 'D'], [5], range(0, csp.dayLength), 20)
-    varMap2 = csp.getVarMapping(['A'], range(csp.numDays), range(1,6), -10000)
+    # varMap1 = csp.getVarMapping(['A', 'C', 'D'], [5], range(0, csp.dayLength), 20)
+    # varMap2 = csp.getVarMapping(['A'], range(csp.numDays), range(1,6), -10000)
+    varMap3 = csp.getVarMapping(['B'],[6], [6], 10000)
+    varMap4 = csp.getVarMapping(['G'],[5], [7], 10000)
+    varMap5 = csp.getVarMapping(['H'],[4], [8], 10000)
     #varMap2 = csp.getVarMapping(['A', 'C', 'D'], range(0,6), range(11,3), 3)
-    csp.updateUnaryWithVarMaps(varMap1)
-    csp.updateUnaryWithVarMaps(varMap2)
+    # csp.updateUnaryWithVarMaps(varMap1)
+    # csp.updateUnaryWithVarMaps(varMap2)
+    csp.updateUnaryWithVarMaps(varMap3)
+    csp.updateUnaryWithVarMaps(varMap4)
+    csp.updateUnaryWithVarMaps(varMap5)
     csp.updateEventConstraints()
     # print "Unary: ", json.dumps(csp.unaryConstraints, indent = 2)
     # for people in csp.unaryConstraints.iteritems():
@@ -101,4 +107,4 @@ events = [['A', 'B', 'C', 'G'], ['G', 'D', 'E', 'F'], ['A', 'G', 'H']]
 # print(ret)
 print "Hello"
 bt = algorithm.BacktrackingSearch()
-bt.solve(create_schedule(events, numDays=7, dayLength=24), mcv=False, ac3=False)
+bt.solve(create_schedule(events, numDays=7, dayLength=10), mcv=True, ac3=False, hwv=True)
