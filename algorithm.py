@@ -11,11 +11,14 @@ class BacktrackingSearch():
         self.firstAssignmentNumOperations = 0
         self.totalWeight = 0;
 
-    def solve(self, csp, mcv, ac3):
+    def solve(self, csp, mcv, ac3, numEvents, events, duration):
         self.csp = csp
         self.mcv = mcv
         self.ac3 = ac3
-        self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
+        self.events = events
+        self.numEvents = numEvents
+        self.duration = duration
+        self.domains = [copy.deepcopy(csp.domain) for i in range(numEvents)]
         self.backtrack({}, 0, 1)
         self.print_stats()
 
@@ -29,16 +32,17 @@ class BacktrackingSearch():
             print "No solution was found."
 
 
-    def new_weight(self, event, day, hour):
+    def new_weight(self, event, dayHourList):
         weight = 0
         # print "Var: ", var
         # print "Day: ", day
         # print "Hour: ", hour
         for var in event[1]:
-            if (day, hour) in self.csp.eventConstraints[event[0]]:
-                return 0
-            else:
-                weight += self.csp.unaryConstraints[var][day][hour]
+            for day, hour in dayHourList:
+                if (day, hour) in self.csp.eventConstraints[event[0]]:
+                    return 0
+                else:
+                    weight += self.csp.unaryConstraints[var][day][hour]
         return weight
 
     def reset(self, assignment, weight):
@@ -64,33 +68,43 @@ class BacktrackingSearch():
         # print self.numOperations
         self.numOperations += 1
         if numAssigned == self.csp.numEvents:
+            print(assignment, weight, numAssigned)
             self.reset(assignment, weight)
         else:
             event = self.next_event(assignment)
+            allAssignments = [a for sublist in assignment.values() for a in sublist]
             # var = self.next_variable(assignment, event)
             # ordered_values = self.domains[var]
+            self.removeUnaryFromDomains()
             if not self.ac3:
-                for day in self.csp.domain.iteritems():
+                for day in self.domains[numAssigned].iteritems():
                     for hour in day[1].keys():
-                        newWeight = self.new_weight(event, day[0], hour)
-                        if newWeight >= 1 and (day[0], hour) not in assignment.values():
-                            assignment[event[0]] = (day[0], hour)
+
+                        inDuration = self.getTimePeriodsInDuration((day[0], hour),
+                                                                    self.duration[numAssigned])
+                        newWeight = self.new_weight(event, inDuration)
+                        if newWeight >= 1 and len(set(inDuration + allAssignments)) == len(inDuration + allAssignments):
+                            assignment[event[0]] = self.getTimePeriodsInDuration((day[0], hour),
+                                                                                 self.duration[numAssigned])
                             self.backtrack(assignment, numAssigned + 1, weight + newWeight)
                             # print assignment
                             del assignment[event[0]]
                             # print "Deleted: ", assignment
             else:
-                for day in self.csp.domain.iteritems():
+                for day in self.domains[numAssigned].iteritems():
                     for hour in day[1].keys():
-                        newWeight = self.new_weight(event, day[0], hour)
-                        if newWeight >= 1 and (day[0], hour) not in assignment.values():
-                            assignment[event[0]] = (day[0], hour)
+
+                        inDuration = self.getTimePeriodsInDuration((day[0], hour),
+                                                                    self.duration[numAssigned])
+                        newWeight = self.new_weight(event, inDuration)
+                        if newWeight >= 1 and len(set(inDuration + allAssignments)) == len(inDuration + allAssignments):
+                            print(inDuration)
+                            assignment[event[0]] = copy.deepcopy(inDuration)
                             localCopy = copy.deepcopy(self.domains)
-                            self.domains[var] = [val]
-                            self.arc_consistency(var)
+                            self.arc_consistency(event[0], assignment)
                             self.backtrack(assignment, numAssigned + 1, weight * newWeight)
                             self.domains = localCopy
-                            del assignment[var]
+                            del assignment[event[0]]
 
     def next_variable(self, assignment, event):
         if self.mcv:
@@ -117,27 +131,63 @@ class BacktrackingSearch():
         varConstraintList.sort(key = lambda x: x[1])
         return varConstraintList[0][0]
     
-    def arc_consistency(self, var1):
-        queue = [var1]
+    def arc_consistency(self, event, assignment):
+        self.setConflictPairs(self.events)
+        conflictPairs = self.conflictPairs
+        queue = [event]
         while queue:
             arc = queue.pop(0)
-            # for val1 in self.csp.domain[arc]
-            #     if self.csp.unaryConstraints[arc][day][hour] == 0:
-            #         self.domains[arc].remove(val1)
-            #         queue.append(arc)
-            for var2 in self.csp.get_neighbors(arc):
-                for val2 in self.domains[var2]:   
-                    if self.revise(arc, var2, val2):
-                        self.domains[var2].remove(val2)
-                        queue.append(var2)
+            for eventNeighbor in self.csp.get_neighbors(arc, self.numEvents):
+                # See if similar people in events
+                if([arc, eventNeighbor] in conflictPairs):
+                    if self.revise(eventNeighbor, assignment):
+                        queue.append(eventNeighbor)
 
-    def revise(self, var1, var2, val2):
-        for val1 in self.domains[var1]:
-            if self.csp.binaryConstraints[var1][var2] is not None:
-                if self.csp.binaryConstraints[var1][var2][val1][val2]:
-                    return False
-        return True
+    def revise(self, event2, assignment):
+        modified = False
+        for day in self.domains[event2]:
+            for hour in self.domains[event2][day]:
+                if (day, hour) in assignment:
+                    self.domains[event2][day].pop(hour, None)
+                    modified = True
+        return modified
 
+    def setConflictPairs(self, people):
+        pairs = []
+        for i in range(len(people)):
+            for j in range(i + 1, len(people)):
+                combinedList = people[i] + people[j]
+                if (len(combinedList) > len(set(combinedList))):
+                    pairs.append([i, j])
+        self.conflictPairs = pairs
+
+    def lenOfDomain(self, domain):
+        cnt = 0
+        for day in domain:
+            cnt += len(domain[day])
+        return cnt
+
+    def getTimePeriodsInDuration(self, start, duration):
+        timePeriods = [start]
+        currPeriod = start
+        for i in range(duration - 1):
+            if(currPeriod[1] + 1 >= self.csp.dayLength):
+                currPeriod = (currPeriod[0] + 1, 0)
+            else:
+                currPeriod = (currPeriod[0], currPeriod[1] + 1)
+            if(currPeriod[0] == self.csp.numDays):
+                currPeriod = (0, 0)
+            timePeriods.append(currPeriod)
+        return timePeriods
+
+    def removeUnaryFromDomains(self):
+        for i, event in enumerate(self.csp.events.iteritems()):
+            for person in event[1]:
+                for dayTuple in self.csp.domain.iteritems():
+                    day = dayTuple[0]
+                    for hour in dayTuple[1].keys():
+                        if (day, hour) in self.csp.eventConstraints[event[0]]:
+                            self.domains[i][day].pop(hour, None)
 # Simulated Annealing
 class SA():
     def __init__(self, csp):
