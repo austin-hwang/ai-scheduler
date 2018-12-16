@@ -40,7 +40,7 @@ class BacktrackingSearch():
                 if (day, hour) in self.csp.eventConstraints[event[0]]:
                     return 0
                 else:
-                    weight += self.csp.unaryConstraints[var][day][hour]
+                    weight += self.csp.scheduleWeights[var][day][hour]
         return weight
 
     def reset(self, assignment, weight):
@@ -106,7 +106,7 @@ class BacktrackingSearch():
 
     def highest_weighted_value(self, event):
         ordered_values = {}
-        for people in self.csp.unaryConstraints.iteritems():
+        for people in self.csp.scheduleWeights.iteritems():
             if people[0] in event[1]:
                 for days in people[1].iteritems():
                     for hours in days[1].iteritems():
@@ -220,7 +220,7 @@ class SA():
                 if(len(timePeriods) == 0):
                     return -1
                 for t in timePeriods:
-                    score += self.csp.unaryConstraints[p][t[0]][t[1]]
+                    score += self.csp.scheduleWeights[p][t[0]][t[1]]
         return score
 
     def getTimePeriodsInDuration(self, start, duration):

@@ -1,77 +1,102 @@
-import json, re, sys, algorithm
+import algorithm, json, random
 
 class CSP:
-    def __init__(self):
-        self.numVars = 0
-        self.numEvents = 5
+    def __init__(self, numDays, dayLength):
+        self.numEvents = 0
+        self.events = {}
         self.variables = []
         self.values = {}
-        self.unaryConstraints = {}
-        self.binaryConstraints = {}
+        self.scheduleWeights = {}
+        self.eventConstraints = {}
         self.domain = []
+        self.numDays = numDays
+        self.dayLength = dayLength
 
     def add_variable(self, var, domain):
         if var not in self.variables:
-            self.numVars += 1
             self.variables.append(var)
             self.values[var] = domain
             self.domain = domain
-            self.unaryConstraints[var] = None
-            self.binaryConstraints[var] = {}
+            self.scheduleWeights[var] = domain
+
+    def updateUnaryDomainVals(self, var, varMap):
+        for key1 in varMap:
+            for key2 in varMap[key1]:
+                self.scheduleWeights[var][key1][key2] = varMap[key1][key2]
+
+    def get_neighbors(self, var, numEvents):
+        # All events are neighbors
+        return range(var+1, numEvents)
+
+    # Map vars to val
+    def getVarMapping(self, vars, days, hours, val):
+        dict = {}
+        for v in vars:
+            dict[v] = {}
+            for d in days:
+                dict[v][d] = {}
+                for h in hours:
+                    dict[v][d][h] = val
+        return dict
+
+    # Update event weights
+    def updateScheduleWeights(self, varMapDict):
+        for key in varMapDict:
+            self.updateUnaryDomainVals(key, varMapDict[key])
+
+    # Add unary constraints
+    def updateEventConstraints(self):
+        for people in self.scheduleWeights.iteritems():
+            for days in people[1].iteritems():
+                for hours in days[1].iteritems():
+                    if hours[1] <= 0:
+                        for event in self.events.iteritems():
+                            if people[0] in event[1]:
+                                self.eventConstraints[event[0]].add((days[0], hours[0]))
 
 
-    def get_neighbors(self, var):
-        return self.binaryConstraints[var].keys()
+def create_schedule(people, numDays, dayLength):
+    csp = CSP(numDays, dayLength)
+    csp.numEvents = len(people)
+    peopleFlat = [item for sublist in people for item in sublist]
+    peopleFlat = list(set(peopleFlat))
+    # Add variables
+    for i in range(len(peopleFlat)):
+        dict = {}
+        for x in range(csp.numDays):
+            dict[x] = {}
+            for d in range(csp.dayLength):
+                dict[x][d] = 1
+        csp.add_variable(peopleFlat[i], dict)
+    for i, val in enumerate(people):
+        csp.events[i] = val
 
-    def add_unary_factor(self, var, factorFunc):
-        factor = {val: float(factorFunc(val)) for val in self.values[var]}
-        if self.unaryConstraints[var] is not None:
-            self.unaryConstraints[var] = {val: self.unaryConstraints[var][val] * factor[val] for val in factor}
-        else:
-            self.unaryConstraints[var] = factor
-
-    def add_binary_factor(self, var1, var2, factor_func):
-        self.update_binary_factor_table(var1, var2, \
-            {val1: {val2: float(factor_func(val1, val2)) for val2 in self.values[var2]} for val1 in self.values[var1]})
-        self.update_binary_factor_table(var2, var1, \
-            {val2: {val1: float(factor_func(val1, val2)) for val1 in self.values[var1]} for val2 in self.values[var2]})
-
-    def update_binary_factor_table(self, var1, var2, table):
-        if var2 not in self.binaryConstraints[var1]:
-            self.binaryConstraints[var1][var2] = table
-        else:
-            currentTable = self.binaryConstraints[var1][var2]
-            for i in table:
-                for j in table[i]:
-                    currentTable[i][j] *= table[i][j]
-
-def weights(x, lower, upper):
-    if lower < x < upper:
-        return 1.0
-    else:
-        return 0.1
-
-def create_schedule():
-    csp = CSP()
-    csp.add_variable('A', [x for x in range(5)])
-    csp.add_variable('B', [x for x in range(5)])
-    csp.add_variable('C', [x for x in range(5)])
-    csp.add_unary_factor('A', lambda x : weights(x, 1, 5))
-    csp.add_unary_factor('B', lambda x : x != 1 and x != 3 and x !=2)
-    csp.add_unary_factor('C', lambda x : x != 4 and x != 3)
-    csp.add_binary_factor('A', 'B', lambda x, y : x == y)
-    csp.add_binary_factor('B', 'C', lambda x, y : x == y)
-    csp.add_binary_factor('A', 'C', lambda x, y : x == y)
-    # print "Unary: ", json.dumps(csp.unaryConstraints, indent = 2)
-    # print "Binary: ", json.dumps(csp.binaryConstraints, indent = 2)
+    csp.eventConstraints = {e[0]: set() for e in csp.events.iteritems()}
+    # Set variable constraints
+    # varMap1 = csp.getVarMapping(['A', 'C', 'D'], [5], range(0, csp.dayLength), 20)
+    # varMap2 = csp.getVarMapping(['A'], range(csp.numDays), range(1,6), -10000)
+    varMap3 = csp.getVarMapping(['B'],[1], [6], 10000)
+    varMap4 = csp.getVarMapping(['G'],[2], [7], 10000)
+    varMap5 = csp.getVarMapping(['H'],[3], [8], 10000)
+    #varMap2 = csp.getVarMapping(['A', 'C', 'D'], range(0,6), range(11,3), 3)
+    # csp.updateScheduleWeights(varMap1)
+    # csp.updateScheduleWeights(varMap2)
+    csp.updateScheduleWeights(varMap3)
+    csp.updateScheduleWeights(varMap4)
+    csp.updateScheduleWeights(varMap5)
+    csp.updateEventConstraints()
+    # print "Unary: ", json.dumps(csp.scheduleWeights, indent = 2)
     return csp
 
-search = algorithm.BacktrackingSearch()
-print "With AC"
-search.solve(create_schedule(), True, True)
-print "Optimal Assignments: ", search.bestAssignment
-print "All Assignments: ", search.allAssignments
+def sampleNewEvents(numDays, numHours, numSample):
+    return random.sample([(d, h) for d in range(numDays) for h in range(numHours)], numSample)
 
-print "Local search"
-search_local = algorithm.LocalSearch()
-search_local.solve(create_schedule())
+# List of people
+events = [['A', 'B', 'C', 'G'], ['G', 'D', 'E', 'F'], ['A', 'G', 'H']]
+# events = [['A','C','D'], ['G', 'D', 'E', 'F']]
+# sa = algorithm.SA(create_schedule(events, numDays=7, dayLength=48))
+durations = [3, 2, 2]
+# ret = sa.simulatedAnnealing(events, sampleNewEvents, durations)
+# print(ret)
+bt = algorithm.BacktrackingSearch()
+bt.solve(create_schedule(events, numDays=4, dayLength=10), mcv=True, ac3=False, hwv=True, numEvents=len(events), events = events, duration=durations)
