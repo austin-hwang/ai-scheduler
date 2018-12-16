@@ -1,0 +1,61 @@
+description: Average constraints case
+events: A B C D;D E F G;A G H
+durations: 3 3 3
+A,0;6,10;23,0
+B,1;1,6;6,2
+G,2;2,7;7,2
+H,3;3,8;8,2
+end
+description: Tight contraints case
+events: A B;C D
+durations: 1 1
+A,0;6,0;12,0
+A,0;6,14;23,0
+C,0;6,0;13,0
+D,0;6,15;23,0
+end
+description: No solution case
+events: A B;C D;E F
+durations: 2 2 2
+A,0;6,0;23,0
+C,0;6,0;23,0
+E,0;6,0;23,0
+end
+description: Two occasions with the same people case
+events: A B;A B
+durations: 4 4
+A,0;3,0;23,0
+A,0;3,18;23,0
+B,5;6,0;23,0
+end
+description: One occasion with multiple people case
+events: A B C D E F G
+durations: 10
+A,0;0,0;0,0
+B,1;1,1;1,0
+C,2;2,2;2,0
+D,3;3,3;3,0
+E,4;4,4;4,0
+F,5;5,5;5,0
+G,6;6,8;23,0
+end
+description: Multiple occasions case
+events: A B;C D;E F;G H;I A;D E;B F;C H
+durations: 1 1 1 1 1 1 1 1
+A,0;6,0;5,0
+B,0;6,19;23,0
+C,5;5,0;23,0
+D,6;6,3;3,0
+D,0;6,0;20,0
+E,4;6,9;17,0
+E,0;3,0;23,0
+F,3;6,1;5,0
+F,0;2,0;23,0
+G,0;6,6;7,3
+G,0;6,8;23,0
+H,0;6,8;8,2
+H,0;6,10;23,0
+H,0;6,0;6,0
+I,0;6,7;8,4
+I,0;5,0;23,0
+end
