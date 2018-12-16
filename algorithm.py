@@ -1,4 +1,6 @@
 import copy, random, math
+from numpy.random import choice
+
 probs = []
 class BacktrackingSearch():
     def __init__(self):
@@ -261,8 +263,8 @@ class SA():
         return [events, assignment[1]]
 
     def simulatedAnnealing(self, people, sampleNewEvents, durations):
-        randRestarts = 100
-        trials = 300
+        randRestarts = 400
+        trials = 100
         self.setConflictPairs(people)
         bestEvents = sampleNewEvents(self.numDays, self.dayLength, len(people))
         bestScore = 0
@@ -288,20 +290,22 @@ class SA():
 
                 # Update temperature
                 T *= DECAY
-            index = conflictsList.index(max(conflictsList))
-            highScore = max(conflictsList)
-            if (highScore > bestScore):
-                bestScore = highScore
-                bestEvents = assignList[index]
+            if not conflictsList:
+                highScore = -1
+            else:
+                index = conflictsList.index(max(conflictsList))
+                highScore = max(conflictsList)
+                if (highScore > bestScore):
+                    bestScore = highScore
+                    bestEvents = assignList[index]
 
-        return bestScore, bestEvents
+        return bestScore
 
     def acceptBag(self, newVal, oldVal, T):
         # Accept if val is better
         if(newVal > oldVal):
             return 1
         else:
-            #return random.random()
-            from numpy.random import choice
-            #probs.append(1 - math.exp(-(oldVal - newVal) / (T * oldVal)))
+            if oldVal == 0:
+                return 0
             return choice([0, 1], 1, [math.exp(-(oldVal - newVal) / (T * oldVal)), 1 - math.exp(-(oldVal - newVal) / (T * oldVal))])[0]
