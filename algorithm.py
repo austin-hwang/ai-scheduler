@@ -14,6 +14,16 @@ class BacktrackingSearch():
         self.firstAssignmentWeight = 0
 
     def solve(self, csp, mcv, ac3, hwv, numEvents, events, duration):
+        """
+        Runs backtracking function
+            :param csp: import the csp
+            :param mcv: flag for mcv heuristic
+            :param ac3: flag for ac-3
+            :param hwv: flag for hwv heuristic
+            :param numEvents: counts number of events
+            :param events: list of all events
+            :param duration: list of event durations
+        """   
         self.csp = csp
         self.mcv = mcv
         self.ac3 = ac3
@@ -26,6 +36,9 @@ class BacktrackingSearch():
         self.print_stats()
 
     def print_stats(self):
+        """
+        Print end results
+        """   
         if self.bestAssignment:
             print "Found %d optimal assignments with weight %f in %d backtrack operations" % (self.numbestAssignments, self.optimalWeight, self.numOperations)
             print "First assignment has weight %f and took %d operations: " % (self.firstAssignmentWeight, self.firstAssignmentNumOperations), self.firstAssignment
@@ -33,8 +46,13 @@ class BacktrackingSearch():
         else:
             print "No solution was found."
 
-    # Evaluates the weight at a current value
     def new_weight(self, event, dayHourList):
+        """
+        Evaluates the weight at a current value
+            :param event: current event evaluated
+            :param dayHourList: list of day hour pairs
+            :return: updated weight
+        """   
         weight = 0
         for var in event[1]:
             for day, hour in dayHourList:
@@ -44,8 +62,12 @@ class BacktrackingSearch():
                     weight += self.csp.scheduleWeights[var][day][hour]
         return weight
 
-    # Resets assignments to find optimal assignment
     def reset(self, assignment, weight):
+        """
+        Resets assignments to find optimal assignment
+            :param assignment: completed assignment
+            :param weight: weight of assignment
+        """   
         self.numAssignments += 1
         newAssignment = {}
         for event in self.csp.events.iteritems():
@@ -68,6 +90,12 @@ class BacktrackingSearch():
             self.firstAssignmentWeight = weight
 
     def backtrack(self, assignment, numAssigned, weight):
+        """
+        Main backtracking algorithm
+            :param assignment: keeps track of current assignment
+            :param numAssigned: counts number of events assigned
+            :param weight: current weight of assignment
+        """   
         self.numOperations += 1
         # Time out backtracking after 1000000 function calls
         if self.numOperations >= 1000000:
@@ -104,24 +132,36 @@ class BacktrackingSearch():
                     # Backtrack 
                     del assignment[event[0]]
                         
-    # Determines which event is next based on heuristic
     def next_event(self, assignment):
+        """
+        Determines which event is next based on heuristic
+            :param assignment: current assignment
+            :return: next event
+        """   
         if self.mcv:
             return self.most_constrained_variable(assignment)
         for event in self.csp.events.iteritems():
             if event[0] not in assignment:
                 return event
     
-    # Checks to see which event has most unary constraints
     def most_constrained_variable(self, assignment):
+        """
+        Checks to see which event has most unary constraints
+            :param assignment: current assignment
+            :return: event with most constraints
+        """   
         most_constrained = []
         for event in self.csp.events.iteritems():
             if event[0] not in assignment:
                 most_constrained.append((event, len(self.csp.eventConstraints[event[0]])))
         return max(most_constrained, key=lambda x:x[1])[0]
 
-    # Returns a list of all domain values sorted by weight 
     def highest_weighted_value(self, event):
+        """
+        Returns a list of all domain values sorted by weight 
+            :param event: current event
+            :return: sorted list in descending order of weight
+        """   
         ordered_values = {}
         for people in self.csp.scheduleWeights.iteritems():
             if people[0] in event[1]:
@@ -135,8 +175,12 @@ class BacktrackingSearch():
                     return list(ordered_values)
         return sorted(ordered_values, key=ordered_values.__getitem__, reverse=True)
 
-    # Runs AC-3 algorithm
     def arc_consistency(self, event, assignment):
+        """
+        Runs AC-3 algorithm
+            :param event: current event
+            :param assignment: current assignment
+        """   
         self.setConflictPairs(self.events)
         conflictPairs = self.conflictPairs
         queue = [event]
@@ -149,6 +193,12 @@ class BacktrackingSearch():
                         queue.append(eventNeighbor)
 
     def revise(self, event2, assignment):
+        """
+        Modify domain
+            :param event2: current event
+            :param assignment: current assignment
+            :return: modified domain 
+        """   
         modified = False
         for day in self.domains[event2]:
             for hour in self.domains[event2][day]:
@@ -158,6 +208,10 @@ class BacktrackingSearch():
         return modified
 
     def setConflictPairs(self, people):
+        """
+        Checks for conflicts
+            :param people: list of people
+        """   
         pairs = []
         for i in range(len(people)):
             for j in range(i + 1, len(people)):
@@ -167,13 +221,23 @@ class BacktrackingSearch():
         self.conflictPairs = pairs
 
     def lenOfDomain(self, domain):
+        """
+        Length of domain
+            :param domain: current domain
+            :return: length of domain
+        """   
         cnt = 0
         for day in domain:
             cnt += len(domain[day])
         return cnt
 
-    # Generate a list of all the hours of the event
     def getTimePeriodsInDuration(self, start, duration):
+        """
+        Generate a list of all the hours of the event
+            :param start: start time of event
+            :param duration: duration of event
+            :return: list of all event hours
+        """   
         timePeriods = [start]
         currPeriod = start
         for i in range(duration - 1):
@@ -186,8 +250,10 @@ class BacktrackingSearch():
             timePeriods.append(currPeriod)
         return timePeriods
 
-    # Preprocesses domain 
     def removeUnaryFromDomains(self):
+        """
+        Preprocesses domain 
+        """   
         for i, event in enumerate(self.csp.events.iteritems()):
             for person in event[1]:
                 for dayTuple in self.csp.domain.iteritems():
@@ -205,6 +271,7 @@ class SA():
 
     def solve(self, csp, people, sampleNewEvents, durations):
         """
+<<<<<<< HEAD
         Solves the CSP
         :param csp: input CSP
         :param people: list of people per event
@@ -213,6 +280,14 @@ class SA():
         :return:
         """
         # Initialize variables
+=======
+        Runs simulated annealing 
+            :param csp: current csp
+            :param people: list of events with people
+            :param sampleNewEvents: start with random sample
+            :param durations: list of durations
+        """  
+>>>>>>> 942a7f8137bddce06ebaa8b48d34e508db04e255
         self.csp = csp
         self.numDays = csp.numDays
         self.dayLength = csp.dayLength
@@ -226,9 +301,14 @@ class SA():
 
     def print_stats(self):
         """
+<<<<<<< HEAD
         Print stats of the assignment found
         :return:
         """
+=======
+        Print end results 
+        """   
+>>>>>>> 942a7f8137bddce06ebaa8b48d34e508db04e255
         print "Found 1 optimal assignments with weight %f" % self.optimalWeight
         print "Best Assignment: ", self.bestAssignment
 

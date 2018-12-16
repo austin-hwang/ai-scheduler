@@ -29,6 +29,7 @@ def create_schedule(people, constraints, numDays, dayLength):
 def sampleNewEvents(numDays, numHours, numSample):
     return random.sample([(d, h) for d in range(numDays) for h in range(numHours)], numSample)
 
+# Evaluate local search function
 def localSearchEval():
     with open("test/testCases.txt") as file:
         data = file.readlines()
@@ -57,6 +58,7 @@ def localSearchEval():
             else:
                 constraints.append(lines.split(","))    
 
+# Evlauate backtracking without heuristics by default
 def backtrackEval(heuristic=False):
     with open("test/testCases.txt") as file:
         data = file.readlines()
@@ -88,10 +90,10 @@ def backtrackEval(heuristic=False):
                 durations = []
             else:
                 constraints.append(lines.split(","))
-
-# print "--------------EVALUATING BACKTRACKING---------------"
-# backtrackEval()
-# print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
-# backtrackEval(heuristic=True)
-print "--------------EVALUATING LOCAL SEARCH---------------"
-localSearchEval()
+if __name__== "__main__":
+    print "--------------EVALUATING BACKTRACKING---------------"
+    backtrackEval()
+    print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
+    backtrackEval(heuristic=True)
+    print "--------------EVALUATING LOCAL SEARCH---------------"
+    localSearchEval()
