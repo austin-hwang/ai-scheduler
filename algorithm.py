@@ -33,7 +33,7 @@ class BacktrackingSearch():
         else:
             print "No solution was found."
 
-
+    # Evaluates the weight at a current value
     def new_weight(self, event, dayHourList):
         weight = 0
         for var in event[1]:
@@ -44,12 +44,14 @@ class BacktrackingSearch():
                     weight += self.csp.scheduleWeights[var][day][hour]
         return weight
 
+    # Resets assignments to find optimal assignment
     def reset(self, assignment, weight):
         self.numAssignments += 1
         newAssignment = {}
         for event in self.csp.events.iteritems():
             newAssignment[event[0]] = assignment[event[0]]
 
+        # Compares to see if current assignment is better than current optimal
         if len(self.bestAssignment) == 0 or weight >= self.optimalWeight:
             if weight == self.optimalWeight:
                 self.numbestAssignments += 1
@@ -59,6 +61,7 @@ class BacktrackingSearch():
 
             self.bestAssignment = newAssignment
 
+        # Track first assignment for heuristics comparison
         if self.firstAssignmentNumOperations == 0:
             self.firstAssignmentNumOperations = self.numOperations
             self.firstAssignment = newAssignment
@@ -66,22 +69,29 @@ class BacktrackingSearch():
 
     def backtrack(self, assignment, numAssigned, weight):
         self.numOperations += 1
+        # Time out backtracking after 1000000 function calls
         if self.numOperations >= 1000000:
             return
+        
+        # Checks for complete assignment
         if numAssigned == self.csp.numEvents:
             self.reset(assignment, weight)
         else:
+            # Get next event and value based on whether heuristics are activated
             event = self.next_event(assignment)
             allAssignments = [a for sublist in assignment.values() for a in sublist]
             values = self.highest_weighted_value(event)
             self.removeUnaryFromDomains()
 
+            # Iterate through domain values
             for day, hour in values:
                 if not day in self.domains[numAssigned].keys() and not hour in self.domains[numAssigned].values()[day].keys():
                     continue
                 inDuration = self.getTimePeriodsInDuration((day, hour), self.duration[numAssigned])
                 newWeight = self.new_weight(event, inDuration)
+                # Only add to assignment if valid 
                 if newWeight >= 1 and len(set(inDuration + allAssignments)) == len(inDuration + allAssignments):
+                    # Calls AC-3 based on whether flag is activated
                     if not self.ac3:
                         assignment[event[0]] = self.getTimePeriodsInDuration((day, hour), self.duration[numAssigned])
                         self.backtrack(assignment, numAssigned + 1, weight + newWeight)
@@ -91,9 +101,10 @@ class BacktrackingSearch():
                         self.arc_consistency(event[0], assignment)
                         self.backtrack(assignment, numAssigned + 1, weight + newWeight)
                         self.domains = localCopy
+                    # Backtrack 
                     del assignment[event[0]]
                         
-
+    # Determines which event is next based on heuristic
     def next_event(self, assignment):
         if self.mcv:
             return self.most_constrained_variable(assignment)
@@ -101,6 +112,7 @@ class BacktrackingSearch():
             if event[0] not in assignment:
                 return event
     
+    # Checks to see which event has most unary constraints
     def most_constrained_variable(self, assignment):
         most_constrained = []
         for event in self.csp.events.iteritems():
@@ -108,6 +120,7 @@ class BacktrackingSearch():
                 most_constrained.append((event, len(self.csp.eventConstraints[event[0]])))
         return max(most_constrained, key=lambda x:x[1])[0]
 
+    # Returns a list of all domain values sorted by weight 
     def highest_weighted_value(self, event):
         ordered_values = {}
         for people in self.csp.scheduleWeights.iteritems():
@@ -159,6 +172,7 @@ class BacktrackingSearch():
             cnt += len(domain[day])
         return cnt
 
+    # Generate a list of all the hours of the event
     def getTimePeriodsInDuration(self, start, duration):
         timePeriods = [start]
         currPeriod = start
@@ -172,6 +186,7 @@ class BacktrackingSearch():
             timePeriods.append(currPeriod)
         return timePeriods
 
+    # Preprocesses domain 
     def removeUnaryFromDomains(self):
         for i, event in enumerate(self.csp.events.iteritems()):
             for person in event[1]:
