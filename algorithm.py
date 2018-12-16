@@ -58,7 +58,7 @@ class BacktrackingSearch():
             self.optimalWeight = weight
 
             self.bestAssignment = newAssignment
-            
+
         if self.firstAssignmentNumOperations == 0:
             self.firstAssignmentNumOperations = self.numOperations
             self.firstAssignment = newAssignment
