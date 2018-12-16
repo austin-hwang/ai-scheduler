@@ -3,7 +3,7 @@ import algorithm, json
 class CSP:
     def __init__(self, numDays, dayLength):
         self.numVars = 0
-        self.numEvents = 3
+        self.numEvents = 0
         self.events = {}
         self.variables = []
         self.values = {}
@@ -59,6 +59,7 @@ class CSP:
 
 def create_schedule(people, numDays, dayLength):
     csp = CSP(numDays, dayLength)
+    csp.numEvents = len(people)
     peopleFlat = [item for sublist in people for item in sublist]
     peopleFlat = list(set(peopleFlat))
     # Add variables
@@ -87,15 +88,6 @@ def create_schedule(people, numDays, dayLength):
     csp.updateUnaryWithVarMaps(varMap5)
     csp.updateEventConstraints()
     # print "Unary: ", json.dumps(csp.unaryConstraints, indent = 2)
-    # for people in csp.unaryConstraints.iteritems():
-    #     for days in people[1].iteritems():
-    #         for hours in days[1].iteritems():
-    #             print hours
-    #print "Variables: ", csp.variables
-    # #csp.updateUnaryWithVarMaps(varMap2)
-    # print "Domain: ", csp.domain
-    print csp.events
-    print csp.eventConstraints
     return csp
 
 import random
@@ -109,7 +101,5 @@ events = [['A', 'B', 'C', 'G'], ['G', 'D', 'E', 'F'], ['A', 'G', 'H']]
 durations = [3, 2, 2]
 # ret = sa.simulatedAnnealing(events, sampleNewEvents, durations)
 # print(ret)
-print "Hello"
 bt = algorithm.BacktrackingSearch()
-bt.solve(create_schedule(events, numDays=4, dayLength=10), mcv=False, ac3=False, hwv=True, numEvents=len(events), events = events, duration=durations)
-print("hello")
+bt.solve(create_schedule(events, numDays=4, dayLength=10), mcv=True, ac3=True, hwv=True, numEvents=len(events), events = events, duration=durations)

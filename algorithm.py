@@ -35,9 +35,6 @@ class BacktrackingSearch():
 
     def new_weight(self, event, dayHourList):
         weight = 0
-        # print "Var: ", var
-        # print "Day: ", day
-        # print "Hour: ", hour
         for var in event[1]:
             for day, hour in dayHourList:
                 if (day, hour) in self.csp.eventConstraints[event[0]]:
@@ -66,55 +63,32 @@ class BacktrackingSearch():
         # print "Best Assignment: ", self.bestAssignment, self.optimalWeight
 
     def backtrack(self, assignment, numAssigned, weight):
-        # print self.numOperations
         self.numOperations += 1
         if numAssigned == self.csp.numEvents:
-            # print(assignment, weight, numAssigned)
             self.reset(assignment, weight)
         else:
             event = self.next_event(assignment)
             allAssignments = [a for sublist in assignment.values() for a in sublist]
-            # var = self.next_variable(assignment, event)
-            # ordered_values = self.domains[var]
             values = self.highest_weighted_value(event)
             self.removeUnaryFromDomains()
-            if not self.ac3:
-                for day, hour in values:
-                    if not day in self.domains[numAssigned].keys() and not hour in self.domains[numAssigned].values()[day].keys():
-                        continue
-                    inDuration = self.getTimePeriodsInDuration((day, hour),
-                                                                self.duration[numAssigned])
-                    newWeight = self.new_weight(event, inDuration)
-                    if newWeight >= 1 and len(set(inDuration + allAssignments)) == len(inDuration + allAssignments):
-                        assignment[event[0]] = self.getTimePeriodsInDuration((day, hour),
-                                                                                self.duration[numAssigned])
+
+            for day, hour in values:
+                if not day in self.domains[numAssigned].keys() and not hour in self.domains[numAssigned].values()[day].keys():
+                    continue
+                inDuration = self.getTimePeriodsInDuration((day, hour), self.duration[numAssigned])
+                newWeight = self.new_weight(event, inDuration)
+                if newWeight >= 1 and len(set(inDuration + allAssignments)) == len(inDuration + allAssignments):
+                    if not self.ac3:
+                        assignment[event[0]] = self.getTimePeriodsInDuration((day, hour), self.duration[numAssigned])
                         self.backtrack(assignment, numAssigned + 1, weight + newWeight)
-                        # print assignment
-                        del assignment[event[0]]
-                        # print "Deleted: ", assignment
-            else:
-                for day in self.domains[numAssigned].iteritems():
-                    for hour in day[1].keys():
-
-                        inDuration = self.getTimePeriodsInDuration((day[0], hour),
-                                                                    self.duration[numAssigned])
-                        newWeight = self.new_weight(event, inDuration)
-                        if newWeight >= 1 and len(set(inDuration + allAssignments)) == len(inDuration + allAssignments):
-                            print(inDuration)
-                            assignment[event[0]] = copy.deepcopy(inDuration)
-                            localCopy = copy.deepcopy(self.domains)
-                            self.arc_consistency(event[0], assignment)
-                            self.backtrack(assignment, numAssigned + 1, weight * newWeight)
-                            self.domains = localCopy
-                            del assignment[event[0]]
-
-    # def next_variable(self, assignment, event):
-    #     if self.mcv:
-    #         return self.most_constrained_variable(assignment)
-    #     else:
-    #         for var in self.csp.variables:
-    #             if var in event: 
-    #                 return var
+                    else:
+                        assignment[event[0]] = copy.deepcopy(inDuration)
+                        localCopy = copy.deepcopy(self.domains)
+                        self.arc_consistency(event[0], assignment)
+                        self.backtrack(assignment, numAssigned + 1, weight * newWeight)
+                        self.domains = localCopy
+                    del assignment[event[0]]
+                        
 
     def next_event(self, assignment):
         if self.mcv:
@@ -144,10 +118,7 @@ class BacktrackingSearch():
                     return list(ordered_values)
         return sorted(ordered_values, key=ordered_values.__getitem__, reverse=True)
 
-
-
-
-    
+    # Runs AC-3 algorithm
     def arc_consistency(self, event, assignment):
         self.setConflictPairs(self.events)
         conflictPairs = self.conflictPairs
