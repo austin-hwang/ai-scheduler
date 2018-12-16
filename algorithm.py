@@ -287,9 +287,6 @@ class SA():
         # Run simulated annealing
         self.simulatedAnnealing(people, sampleNewEvents, durations)
 
-        # Calculate stats for final state found
-        self.print_stats()
-
     def print_stats(self):
         """
         Print stats of the assignment found

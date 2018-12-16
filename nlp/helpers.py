@@ -41,11 +41,11 @@ def preprocDescrip():
     :return:
     """
     # Load lists of descriptions
-    concentrations = pickle.load(open("concentrations.p", "rb"))
-    descr = pickle.load(open("concentrationDescr.p", "rb"))
+    concentrations = pickle.load(open("nlp/concentrations.p", "rb"))
+    descr = pickle.load(open("nlp/concentrationDescr.p", "rb"))
 
-    orgInfo = pickle.load(open("orgInfo.p", "rb"))
-    orgNames = pickle.load(open("orgNames.p", "rb"))
+    orgInfo = pickle.load(open("nlp/orgInfo.p", "rb"))
+    orgNames = pickle.load(open("nlp/orgNames.p", "rb"))
 
     # Add org names to descriptions; remove the word 'Harvard'
     for i, org in enumerate(orgInfo):
@@ -57,8 +57,8 @@ def preprocDescrip():
     concentrationLists = tc.getSimilarityLists(descr)
 
     # Store results for future retrieval
-    pickle.dump(orgInfoLists, open("orgInfoLists.p", "wb"))
-    pickle.dump(concentrationLists, open("concentrationLists.p", "wb"))
+    pickle.dump(orgInfoLists, open("nlp/orgInfoLists.p", "wb"))
+    pickle.dump(concentrationLists, open("nlp/concentrationLists.p", "wb"))
 
 ## Helpers for event description translation
 def performSpellCorrection(text):

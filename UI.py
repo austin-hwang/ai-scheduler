@@ -2,9 +2,10 @@ import sys
 sys.path.insert(0, './nlp/')
 import algorithm
 from tui import display, prompt, choice
-from wordsToDates import *
+from readNewEventInfo import *
 from run import sampleNewEvents
 from datetime import datetime
+from datetime import timedelta
 import constraint
 import getFriendRecommendation
 import readNewEventInfo
@@ -30,39 +31,53 @@ def schedule():
 
     # Confirm event name
     eventName = "".join(descr[3]).capitalize()
-    eventCorrect = prompt("Is this your event name (y/n)?: " + "".join(eventName) + "\n")
-    eventInput = "".join(eventName)
-    if (eventCorrect == 'n'):
-        eventInput = prompt("Input the correct event name \n")
+    if(eventName == ""):
+        eventInput = prompt("We didn't get your event name. What is it? \n")
+    else:
+        eventCorrect = prompt("Is this your event name (y/n)?: " + "".join(eventName) + "\n")
+        eventInput = "".join(eventName)
+        if (eventCorrect == 'n'):
+            eventInput = prompt("Input the correct event name \n")
 
     # Check if Location is correct
-    locCorrect = prompt("Is this your location (y/n)?: " + " ".join(descr[0]) + "\n")
     locInput = " ".join(descr[0])
-    if (locCorrect == 'n'):
-        locInput = prompt("Input the correct location \n")
+    if (locInput == ""):
+        locInput = prompt("We didn't get your location name. What is it? \n")
+    else:
+        locCorrect = prompt("Is this your location (y/n)?: " + " ".join(descr[0]) + "\n")
+        if (locCorrect == 'n'):
+            locInput = prompt("Input the correct location \n")
 
     # Check if event participants are correct
-    peopleCorrect = prompt("Are you going with these people?: " + " ".join(descr[1]) + "(y/n)\n")
     peopleInput = " ".join(descr[1])
-    if (peopleCorrect == 'n'):
-        peopleInput = prompt("Input the correct people's names separated by commas. ex. John, Sarah \n")
-        peopleInput = [x.strip() for x in peopleInput.split(',')]
+    if (peopleInput == ""):
+        peopleInput = prompt("We didn't get your attendees. Who are they? \n")
+    else:
+        peopleCorrect = prompt("Are you going with these people?: " + " ".join(descr[1]) + "(y/n)\n")
+        if (peopleCorrect == 'n'):
+            peopleInput = prompt("Input the correct people's names separated by commas. ex. John, Sarah \n")
+            peopleInput = [x.strip() for x in peopleInput.split(',')]
 
     # Check if dates and times are correct
-    display("Are these all of these preferred dates and times correct?")
     minLen = min(len(descr[2][0]), len(descr[2][1]))
     timesInput = []
-    for i in range(minLen):
-        timesInput.append((descr[2][0][i], descr[2][1][i]))
-        display('Time: ' + str(descr[2][0][i]) + ' | Date: ' + str(descr[2][1][i]))
-    timesCorrect = prompt("Input y/n: \n")
-    if (timesCorrect == 'n'):
-        timesInput = prompt(
-            "Input the correct date(s) and time(s), separated by commas. Ex. Tomorrow 12pm, Friday 1pm\n")
-        timesInput = timesInput.split(',')
-        reader = readNewEventInfo.readEventInfo()
-        timesInput = [reader.parseTime(t.lower()) for t in timesInput]
-        timesInput = [(t[0][0], t[1][0]) for t in timesInput]
+    if (minLen == 0):
+        timesInput = prompt("We didn't get time input. Input the correct date(s) and time(s), separated by commas. "
+                            "Ex. Tomorrow 12pm, Friday 1pm \n")
+    else:
+        display("Are these all of these preferred dates and times correct?")
+        for i in range(minLen):
+            timesInput.append((descr[2][0][i], descr[2][1][i]))
+            display('Time: ' + str(descr[2][0][i][0]) + ":" + str(int(descr[2][0][i][1])*100/60).zfill(2) +
+                    ' | Date: ' + str(descr[2][1][i]))
+        timesCorrect = prompt("Input y/n: \n")
+        if (timesCorrect == 'n'):
+            timesInput = prompt(
+                "Input the correct date(s) and time(s), separated by commas. Ex. Tomorrow 12pm, Friday 1pm\n")
+            timesInput = timesInput.split(',')
+            reader = readNewEventInfo.readEventInfo()
+            timesInput = [reader.parseTime(t.lower()) for t in timesInput]
+            timesInput = [(t[0][0], t[1][0]) for t in timesInput]
 
     # Get event duration
     duration = prompt(
@@ -113,7 +128,7 @@ def displayEvents():
         timesPrint = ["Time: " + str(t[0][0]) + ":00" + " | " + t[1] for t in times[i]]
         print("Preferred Times:\n" + "\n".join(timesPrint))
         cnt += 1
-        print("\n\n")
+        print("")
     raw_input("Press Enter to continue...")
 
 def readConstraints():
@@ -194,8 +209,22 @@ def calcSchedule(people, times, duration):
             csp.updateScheduleWeights(varMap)
         daysDiff.append(diff)
 
+    cnt = 1
     # Finds a recommended item via simulated annealing
     sa.solve(csp, people, sampleNewEvents, duration)
+    print("---Recommended Event Times---")
+    for key in sa.bestAssignment:
+        dayDiff, hour = sa.bestAssignment[key][0]
+        # Format Day
+        day = datetime.now() + timedelta(days=dayDiff)
+        day = day.strftime("%Y-%m-%d")
+
+        # Format Hour
+        hour = str(hour) + ":00"
+        print("Time for Event {}:".format(cnt))
+        print("Time: " + hour + " | " + day)
+        print("")
+        cnt += 1
 
 def initialize():
     """
