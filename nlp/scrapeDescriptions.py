@@ -46,7 +46,7 @@ class scrapeDescriptions():
             print(descr[i])
 
         pickle.dump(concentrations, open( "concentrations.p", "wb" ))
-        pickle.dump(descr, open( "concentrationDescr.p", "wb" ))
+        pickle.dump(descr, open( "concentration_descr.p", "wb" ))
 
     def getClubInfo(self):
 
@@ -96,6 +96,10 @@ class scrapeDescriptions():
             print(orgInfo[i])
             print(orgNames[i])
 
-        pickle.dump(orgInfo, open( "orgInfo.p", "wb" ))
-        pickle.dump(orgNames, open( "orgNames.p", "wb" ))
-        pickle.dump(orgIds, open( "orgIds.p", "wb" ))
+        pickle.dump(orgInfo, open( "org_info.p", "wb" ))
+        pickle.dump(orgNames, open( "org_names.p", "wb" ))
+        pickle.dump(orgIds, open( "org_ids.p", "wb" ))
+
+# s = scrapeDescriptions()
+# s.getClubInfo()
+# s.get_concentration_info()
