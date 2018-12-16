@@ -89,16 +89,9 @@ def backtrackEval(heuristic=False):
             else:
                 constraints.append(lines.split(","))
 
-# <<<<<<< Updated upstream
 # print "--------------EVALUATING BACKTRACKING---------------"
 # backtrackEval()
 # print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
 # backtrackEval(heuristic=True)
-# =======
-# # print "--------------EVALUATING BACKTRACKING---------------"
-# # backtrackEval()
-# # print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
-# # backtrackEval(heuristic=True)
-# >>>>>>> Stashed changes
-# # print "--------------EVALUATING LOCAL SEARCH---------------"
-# # localSearchEval()
+print "--------------EVALUATING LOCAL SEARCH---------------"
+localSearchEval()
