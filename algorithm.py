@@ -40,8 +40,8 @@ class BacktrackingSearch():
         Print end results
         """   
         if self.bestAssignment:
-            print "Found %d optimal assignments with weight %f in %d backtrack operations" % (self.numbestAssignments, self.optimalWeight, self.numOperations)
-            print "First assignment has weight %f and took %d operations: " % (self.firstAssignmentWeight, self.firstAssignmentNumOperations), self.firstAssignment
+            print "Found %d optimal assignments with weight %f in %d backtrack operations" % (self.numbestAssignments, self.optimalWeight-1, self.numOperations)
+            print "First assignment has weight %f and took %d operations: " % (self.firstAssignmentWeight-1, self.firstAssignmentNumOperations), self.firstAssignment
             print "Best assignment: ", self.bestAssignment
         else:
             print "No solution was found."
@@ -394,8 +394,8 @@ class SA():
         :return: Stores best score in 'self.optimalWeight' and the corresponding best assignment
         in 'self.bestAssignment'
         """
-        randRestarts = 400
-        trials = 100
+        randRestarts = 100
+        trials = 300
         self.setConflictPairs(people)
         bestEvents = sampleNewEvents(self.numDays, self.dayLength, len(people))
         bestScore = 0

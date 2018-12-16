@@ -59,7 +59,7 @@ def localSearchEval():
                 constraints.append(lines.split(","))    
 
 # Evlauate backtracking without heuristics by default
-def backtrackEval(heuristic=False):
+def backtrackEval(heuristic=False, ac3=False):
     with open("test/testCases.txt") as file:
         data = file.readlines()
         attendees = []
@@ -80,10 +80,7 @@ def backtrackEval(heuristic=False):
                 csp = create_schedule(attendees, constraints, numDays=7, dayLength=24)
 
                 start_time = time.time()
-                if heuristic:
-                    bt.solve(csp, mcv=True, ac3=False, hwv=True, numEvents=len(attendees), events=attendees, duration=durations)
-                else:    
-                    bt.solve(csp, mcv=False, ac3=False, hwv=False, numEvents=len(attendees), events=attendees, duration=durations)
+                bt.solve(csp, mcv=heuristic, ac3=ac3, hwv=heuristic, numEvents=len(attendees), events=attendees, duration=durations)
                 print("--- %s seconds ---\n" % (time.time() - start_time))
                 attendees = []
                 constraints = []
@@ -91,9 +88,11 @@ def backtrackEval(heuristic=False):
             else:
                 constraints.append(lines.split(","))
 if __name__== "__main__":
-    print "--------------EVALUATING BACKTRACKING---------------"
-    backtrackEval()
-    print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
-    backtrackEval(heuristic=True)
+    # print "--------------EVALUATING BACKTRACKING---------------"
+    # backtrackEval()
+    # print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
+    # backtrackEval(heuristic=True)
+    # print "--------------EVALUATING BACKTRACKING WITH AC-3---------------"
+    # backtrackEval(heuristic=True, ac3=True)
     print "--------------EVALUATING LOCAL SEARCH---------------"
     localSearchEval()
