@@ -279,6 +279,19 @@ class SA():
         :return:
         """
         # Initialize variables
+        self.csp = csp
+        self.numDays = csp.numDays
+        self.dayLength = csp.dayLength
+        self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
+
+        # Run simulated annealing
+        self.simulatedAnnealing(people, sampleNewEvents, durations)
+
+    def print_stats(self):
+        """
+        Print stats of the assignment found
+        :return:
+        """
         print "Found 1 optimal assignments with weight %f" % self.optimalWeight
         print "Best Assignment: ", self.bestAssignment
 

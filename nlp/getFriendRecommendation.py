@@ -2,6 +2,8 @@ import csv
 import scipy.stats as ss
 import numpy as np
 from helpers import *
+import sys
+sys.path.insert(0, './nlp/')
 
 ## Get Created User Data
 def getFriendRecommendation(userTraits = ['Erin', 'Li', \
@@ -16,21 +18,21 @@ def getFriendRecommendation(userTraits = ['Erin', 'Li', \
     """
     # Reads friend data from input
     data = []
-    with open('sample_data.csv') as csvfile:
+    with open('nlp/sample_data.csv') as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
         for row in readCSV:
             #print(row[0], row[1], row[2])
             data.append(row)
 
     # Load scraped data and description proximity calculations
-    concentrations = pickle.load(open( "concentrations.p", "rb" ))
-    descr = pickle.load(open( "concentration_descr.p", "rb" ))
+    concentrations = pickle.load(open( "nlp/concentrations.p", "rb" ))
+    descr = pickle.load(open( "nlp/concentration_descr.p", "rb" ))
 
-    org_info = pickle.load(open( "org_info.p", "rb" ))
-    org_names = pickle.load(open( "org_names.p", "rb" ))
+    org_info = pickle.load(open( "nlp/org_info.p", "rb" ))
+    org_names = pickle.load(open( "nlp/org_names.p", "rb" ))
 
-    concTable = pickle.load(open( "concentrationLists.p", "rb" ))
-    orgsTable = pickle.load(open( "orgInfoLists.p", "rb" ))
+    concTable = pickle.load(open( "nlp/concentrationLists.p", "rb" ))
+    orgsTable = pickle.load(open( "nlp/orgInfoLists.p", "rb" ))
 
     # Compare the new user vs each person
     newPerson = userTraits

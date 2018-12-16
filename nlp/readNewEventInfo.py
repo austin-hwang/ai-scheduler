@@ -3,7 +3,7 @@ from dateutil import parser
 from timex import *
 from helpers import *
 
-class readNewEventInfo():
+class readEventInfo():
     """
     Extracts event information from user input text
     """
@@ -53,7 +53,11 @@ class readNewEventInfo():
                 continue
 
         # Returns list of event info
-        events = [location, person, time, vps[0]]
+        if(len(vps) == 0):
+            eventName = ""
+        else:
+            eventName = vps[0]
+        events = [location, person, time, eventName]
         return events
 
     def preprocessText(self, sent):
@@ -96,8 +100,9 @@ class readNewEventInfo():
             try:
                 d = parser.parse(word, fuzzy=True)
                 # Parser will parse days too. Don't want those added to time
-                if(d.day == today().day and d.month == today().month and d.year == today().year):
-                    h.append([d.hour, d.minute / 60., d.second / 3600])
+                if(any(char.isdigit() for char in word)):
+                    if(d.day == today().day and d.month == today().month and d.year == today().year):
+                        h.append([d.hour, d.minute / 60., d.second / 3600])
             except:
                 continue
 
