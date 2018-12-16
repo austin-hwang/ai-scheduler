@@ -34,6 +34,8 @@ The assignment output is formatted as such:
 
 The day range is generally from 0-6 to represent the days of the week and the hour range is 0-23 for 24 hours. If the event is more than one hour long, then the assignment will include the consecutive hours for that duration.
 
+## Additional Testing
+
 If you want do perform additional testing, the `test/testCases.txt` file can be modified to add additional tests. 
 
 Test must be formatted in the following way:
