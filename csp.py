@@ -143,7 +143,7 @@ def backtrackEval():
                 csp = create_schedule(attendees, constraints, numDays=7, dayLength=24)
 
                 start_time = time.time()
-                bt.solve(csp, mcv=True, ac3=False, hwv=True, numEvents=len(attendees), events=attendees, duration=durations)
+                bt.solve(csp, mcv=False, ac3=False, hwv=False, numEvents=len(attendees), events=attendees, duration=durations)
                 print("--- %s seconds ---\n" % (time.time() - start_time))
                 attendees = []
                 constraints = []
@@ -151,7 +151,7 @@ def backtrackEval():
             else:
                 constraints.append(lines.split(","))
 
-def acEval():
+def heuristicsEval():
     with open("test/test1.txt") as file:
         data = file.readlines()
         attendees = []
@@ -172,7 +172,7 @@ def acEval():
                 csp = create_schedule(attendees, constraints, numDays=7, dayLength=24)
 
                 start_time = time.time()
-                bt.solve(csp, mcv=True, ac3=True, hwv=True, numEvents=len(attendees), events=attendees, duration=durations)
+                bt.solve(csp, mcv=True, ac3=False, hwv=True, numEvents=len(attendees), events=attendees, duration=durations)
                 print("--- %s seconds ---\n" % (time.time() - start_time))
                 attendees = []
                 constraints = []
@@ -182,7 +182,7 @@ def acEval():
 
 print "--------------EVALUATING BACKTRACKING---------------"
 backtrackEval()
-print "--------------EVALUATING BACKTRACKING WITH AC-3---------------"
-acEval()
+print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
+heuristicsEval()
 print "--------------EVALUATING LOCAL SEARCH---------------"
 localSearchEval()
