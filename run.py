@@ -30,7 +30,7 @@ def sampleNewEvents(numDays, numHours, numSample):
     return random.sample([(d, h) for d in range(numDays) for h in range(numHours)], numSample)
 
 def localSearchEval():
-    with open("test/test1.txt") as file:
+    with open("test/testCases.txt") as file:
         data = file.readlines()
         attendees = []
         constraints = []
@@ -58,7 +58,7 @@ def localSearchEval():
                 constraints.append(lines.split(","))    
 
 def backtrackEval(heuristic=False):
-    with open("test/test1.txt") as file:
+    with open("test/testCases.txt") as file:
         data = file.readlines()
         attendees = []
         constraints = []

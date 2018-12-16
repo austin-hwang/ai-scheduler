@@ -24,17 +24,19 @@ month = "(january|february|march|april|may|june|july|august|september| \
 dmy = "(year|day|week|month)"
 rel_day = "(today|yesterday|tomorrow|tonight|tonite)"
 exp1 = "(before|after|earlier|later|ago)"
-exp2 = "(this|next|last)"
+exp2 = "(this|next| |last)"
 iso = "\d+[/-]\d+[/-]\d+ \d+:\d+:\d+\.\d+"
 year = "((?<=\s)\d{4}|^\d{4})"
 regxp1 = "((\d+|(" + numbers + "[-\s]?)+) " + dmy + "s? " + exp1 + ")"
 regxp2 = "(" + exp2 + " (" + dmy + "|" + week_day + "|" + month + "))"
+regxp6 = "("+"(" + dmy + "|" + week_day + "|" + month + "))"
 
 reg1 = re.compile(regxp1, re.IGNORECASE)
 reg2 = re.compile(regxp2, re.IGNORECASE)
 reg3 = re.compile(rel_day, re.IGNORECASE)
 reg4 = re.compile(iso)
 reg5 = re.compile(year)
+reg6 = re.compile(regxp6, re.IGNORECASE)
 
 def tag(text):
 
@@ -66,6 +68,12 @@ def tag(text):
 
     # Year
     found = reg5.findall(text)
+    for timex in found:
+        timex_found.append(timex)
+
+    # Remove 'this, next, etc.' requirement before time
+    found = reg6.findall(text)
+    found = [a[0] for a in found if len(a) > 1]
     for timex in found:
         timex_found.append(timex)
 
@@ -220,11 +228,24 @@ def ground(tagged_text, base_date):
                             weekday=(day,0)))
 
         # Weekday in the current week.
-        elif re.match(r'this ' + week_day, timex, re.IGNORECASE):
+        elif(re.match(r'this ' + week_day, timex, re.IGNORECASE) ):
             day = hashweekdays[timex.split()[1]]
-            timex_val = str(base_date + RelativeDateTime(weeks=0, \
-                            weekday=(day,0)))
-
+            # If "this" weekday has already passed, go to next week
+            if(datetime.datetime.today().day > day):
+                timex_val = str(base_date + RelativeDateTime(weeks=1, \
+                                                             weekday=(day, 0)))
+            else:
+                timex_val = str(base_date + RelativeDateTime(weeks=0, \
+                                weekday=(day,0)))
+        elif(re.match(week_day, timex, re.IGNORECASE)):
+            day = hashweekdays[timex.split()[0]]
+            # If "this" weekday has already passed, go to next week
+            if (datetime.datetime.today().day > day):
+                timex_val = str(base_date + RelativeDateTime(weeks=1, \
+                                                             weekday=(day, 0)))
+            else:
+                timex_val = str(base_date + RelativeDateTime(weeks=0, \
+                                                             weekday=(day, 0)))
         # Weekday in the following week.
         elif re.match(r'next ' + week_day, timex, re.IGNORECASE):
             day = hashweekdays[timex.split()[1]]
@@ -254,10 +275,18 @@ def ground(tagged_text, base_date):
             timex_val = str(base_date.year - 1) + '-' + str(month)
 
         # Month in the current year.
-        elif re.match(r'this ' + month, timex, re.IGNORECASE):
+        elif(re.match(r'this ' + month, timex, re.IGNORECASE)):
             month = hashmonths[timex.split()[1]]
-            timex_val = str(base_date.year) + '-' + str(month)
-
+            if(datetime.datetime.today().month > month):
+                timex_val = str(base_date.year) + '-' + str(month)
+            else:
+                timex_val = str(base_date.year + 1) + '-' + str(month)
+        elif(re.match(month, timex, re.IGNORECASE)):
+            month = hashmonths[timex.split()[0]]
+            if (datetime.datetime.today().month > month):
+                timex_val = str(base_date.year) + '-' + str(month)
+            else:
+                timex_val = str(base_date.year + 1) + '-' + str(month)
         # Month in the following year.
         elif re.match(r'next ' + month, timex, re.IGNORECASE):
             month = hashmonths[timex.split()[1]]
@@ -357,5 +386,5 @@ def demo():
     print(taggedLine)
     print(ground(taggedLine, gmt()))
 
-if __name__ == '__main__':
-    demo()
+# if __name__ == '__main__':
+#     demo()
