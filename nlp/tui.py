@@ -43,7 +43,7 @@ def choice(options):
             if number < 0 or len(options) <= number:
                 raise ValueError("Invalid number")
 
-        except Exception:  # TODO should this be a ValueError or a general Exception?
+        except Exception:
             print("Sorry, please enter a number between 1 and {}".format(len(options)))
             number = None
     return number

@@ -3,38 +3,44 @@ from dateutil import parser
 from timex import *
 from helpers import *
 
-class wordsToDates():
-
+class readNewEventInfo():
+    """
+    Extracts event information from user input text
+    """
     def run(self, text):
-        # fname = "input.txt"
-        # with open(fname) as f:
-        #     content = f.readlines()
-        # for line in content:
+        """
+        Extracts information from input 'text'
+        :param text: Input to extract event description from
+        :return: List of event info [location, attendees, preferred times, event title]
+        """
+
+        # Preprocess text via spell correction and tokenization
         input_text = text
         input_text = performSpellCorrection(input_text)
         ex = self.preprocessText(input_text)
 
-        # Chunks and gets named entities
+        # Chunks sentences and gets named entities
         chunkedSentences = nltk.ne_chunk(ex, binary=False)
 
-        # Name, Location, Person, Time
+        # Retrieves Name, Location, Person, Time
         input_text = text.lower()
         time = self.parseTime(input_text)
 
+        # Extracts people in the sentence
         person = []
         for tree in chunkedSentences:
             # Print results per sentence
             # print extract_entity_names(tree)
             person.extend(self.getTextForAttr(tree, "PERSON"))
 
+        # Extracts location in the sentence
         location = []
         for tree in chunkedSentences:
             # Print results per sentence
             # print extract_entity_names(tree)
             location.extend(self.getTextForAttr(tree, "ORGANIZATION"))
 
-
-        # Get event name
+        # Get event name via a set phrase pattern
         pattern = 'VerbPhrase: {<VB>?<NN>*<IN>}'
         cp = nltk.RegexpParser(pattern)
         cs = cp.parse(ex)
@@ -46,31 +52,27 @@ class wordsToDates():
             except:
                 continue
 
+        # Returns list of event info
         events = [location, person, time, vps[0]]
         return events
-        # Tokenization, parts of speech tagging
 
     def preprocessText(self, sent):
+        """
+        Tokenize and tag each word
+        :param sent: Input text to process
+        :return: Processed text
+        """
         sent = nltk.word_tokenize(sent)
         sent = nltk.pos_tag(sent)
         return sent
 
-    def parseTime(self, text):
-        # Hour and Minute
-        d = parser.parse(text, fuzzy=True)
-        h = [d.hour, d.minute / 60., d.second / 3600]
-
-        # Date
-        taggedLine = tag(text)
-        time = ground(taggedLine, gmt())
-        try:
-            matchObj = re.search(r'val(.*)(">?)', time, flags=0)
-            matchObj = re.findall('"([^"]*)"', matchObj.group(0))
-        except:
-            matchObj = []
-        return [h, matchObj]
-
     def getTextForAttr(self, processed_text, attr):
+        """
+        Extracts entity names of type 'attr' from 'processed_text'
+        :param processed_text: Pre-processed text with attribute labels
+        :param attr: Attribute type to extract from processed text
+        :return: Words from processed text with the desired attribute
+        """
         t = processed_text
         entity_names = []
         if hasattr(t, 'label') and t.label:
@@ -82,12 +84,12 @@ class wordsToDates():
 
         return entity_names
 
-    def preprocessText(self, sent):
-        sent = nltk.word_tokenize(sent)
-        sent = nltk.pos_tag(sent)
-        return sent
-
     def parseTime(self, text):
+        """
+        Parses time phrases from input 'text'
+        :param text: Text to parse
+        :return: Times in 'yr-month-day' format
+        """
         # Hour and Minute
         h = []
         for word in text.split(' '):

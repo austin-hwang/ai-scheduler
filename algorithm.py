@@ -204,30 +204,54 @@ class SA():
         self.conflictPairs = []
 
     def solve(self, csp, people, sampleNewEvents, durations):
+        """
+        Solves the CSP
+        :param csp: input CSP
+        :param people: list of people per event
+        :param sampleNewEvents: function to randomly sample a new starting combination of events
+        :param durations: durations of the events
+        :return:
+        """
+        # Initialize variables
         self.csp = csp
         self.numDays = csp.numDays
         self.dayLength = csp.dayLength
         self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
+
+        # Run simulated annealing
         self.simulatedAnnealing(people, sampleNewEvents, durations)
+
+        # Calculate stats for final state found
         self.print_stats()
 
     def print_stats(self):
+        """
+        Print stats of the assignment found
+        :return:
+        """
         print "Found 1 optimal assignments with weight %f" % self.optimalWeight
         print "Best Assignment: ", self.bestAssignment
 
     def num_conflicts(self, assignment, duration):
+        """
+        Calculate the score of the current assignment
+        :param assignment: current assignment
+        :param duration: duration of the event
+        :return: score for the current assignment
+        """
         events = assignment[0]
         people = assignment[1]
         score = 0
 
-        # Can't assign conflict pairs
+        # Can't assign conflict pairs; if conflict pair exists, assignment is not valid
         for p in self.conflictPairs:
             group1 = self.getTimePeriodsInDuration(events[p[0]], duration[p[0]])
             group2 = self.getTimePeriodsInDuration(events[p[1]], duration[p[1]])
             inBothLists = set(group1) & set(group2)
             if(inBothLists):
-                return -1
+                return -100
 
+        # Calculate score of assignment by sum of all weights through the assignment's time duration
         for i, e in enumerate(events):
             for p in people[i]:
                 timePeriods = self.getTimePeriodsInDuration(e, duration[i])
@@ -235,9 +259,17 @@ class SA():
                     return -1
                 for t in timePeriods:
                     score += self.csp.scheduleWeights[p][t[0]][t[1]]
+
+        # Returns the assignment score
         return score
 
     def getTimePeriodsInDuration(self, start, duration):
+        """
+        Find all time slots from the 'start' slot through 'duration' hours in the future
+        :param start: Start time slot
+        :param duration: Number of hours in the duration
+        :return: List of tuples of times from 'start' for 'duration' hours
+        """
         timePeriods = [start]
         currPeriod = start
         for i in range(duration - 1):
@@ -251,6 +283,11 @@ class SA():
         return timePeriods
 
     def setConflictPairs(self, people):
+        """
+        Finds pairs of events in which people are the same (implies the events cannot occur at the same time)
+        :param people: List of people in each event
+        :return: List of tuples of events in which the same people are in both events
+        """
         pairs = []
         for i in range(len(people)):
             for j in range(i + 1, len(people)):
@@ -260,19 +297,37 @@ class SA():
         self.conflictPairs = pairs
 
     def getNeighbor(self, assignment):
+        """
+        Find a neighbor of the current state (either one day or one hour difference) of one event in the assignment
+        :param assignment: assignment to find neighbor of
+        :return: a neighbor of 'assignment'
+        """
         events = assignment[0]
+        # Randomly choose an event and whether to change day or time
         eventNum = int(random.random() * len(events))
         dayOrTime = int(random.random() * 2)
         time = events[eventNum]
+
+        # Shift to find the neighbor
         shift = random.sample([-1, 1], 1)
         if dayOrTime == 0:
             newTime = ((time[dayOrTime] + shift[0]) % self.numDays, time[1])
         else:
             newTime = (time[0], (time[dayOrTime] + shift[0]) % self.dayLength)
         events[events.index(time)] = newTime
+
+        # Return neighbor
         return [events, assignment[1]]
 
     def simulatedAnnealing(self, people, sampleNewEvents, durations):
+        """
+        Find an event schedule via simulated annealing
+        :param people: List of people per event
+        :param sampleNewEvents: Function to randomly sample a starting event combination
+        :param durations: Duration of each event
+        :return: Stores best score in 'self.optimalWeight' and the corresponding best assignment
+        in 'self.bestAssignment'
+        """
         randRestarts = 400
         trials = 100
         self.setConflictPairs(people)
@@ -310,9 +365,18 @@ class SA():
                     bestEvents = assignList[index]
 
         self.optimalWeight = bestScore
-        self.bestAssignment = {bestEvents[0].index(x):self.getTimePeriodsInDuration(x, durations[bestEvents[0].index(x)]) for x in bestEvents[0]}
+        self.bestAssignment = {bestEvents[0].index(x):self.getTimePeriodsInDuration(x, durations[bestEvents[0].index(x)])
+                               for x in bestEvents[0]}
 
     def acceptBag(self, newVal, oldVal, T):
+        """
+        Returns whether the algorithm should move to a new state. If weight sum is higher, then always move there.
+        Otherwise, move to less optimal state with small probability.
+        :param newVal: Previous weight sum
+        :param oldVal: New weight sum
+        :param T: Temperature
+        :return: 0 or 1 (no move or move)
+        """
         # Accept if val is better
         if(newVal > oldVal):
             return 1

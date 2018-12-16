@@ -3,6 +3,9 @@ import string
 import os
 import sys
 
+# Original code taken from: https://github.com/nltk/nltk_contrib/blob/master/nltk_contrib/timex.py
+# Code was modified to make all recommended times in the future and make input capitalization-neutral
+#
 # Requires eGenix.com mx Base Distribution
 # http://www.egenix.com/products/python/mxBase/
 try:

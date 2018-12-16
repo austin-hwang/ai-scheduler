@@ -5,11 +5,19 @@ import re
 from BeautifulSoup import BeautifulSoup
 
 class scrapeDescriptions():
+    """
+    Scrape concentration and club descriptions from Harvard websites
+    """
     def get_concentration_info(self):
+        """
+        Get concentration descriptions from Harvard website
+        :return:
+        """
         ### Get Concentration Info
         address = 'https://handbook.fas.harvard.edu/book/fields-concentration'
         soup = BeautifulSoup(urllib2.urlopen(address).read())
 
+        # Parses the HTML
         table = soup.find("table")
         attrs = table.findAll("a")
         links = []
@@ -45,14 +53,20 @@ class scrapeDescriptions():
             print(concentrations[i])
             print(descr[i])
 
+        # Saves descriptions found for future use
         pickle.dump(concentrations, open( "concentrations.p", "wb" ))
         pickle.dump(descr, open( "concentration_descr.p", "wb" ))
 
     def getClubInfo(self):
-
+        """
+        Get club descriptions from Harvard student org site
+        :return:
+        """
         ### Get Club Info
         address = 'https://osl.fas.harvard.edu/student-organizations'
         soup = BeautifulSoup(urllib2.urlopen(address).read())
+
+        # Gets club IDs
         div = soup.findAll('div', {'class' : 'field-item even'})
         iframeSrc = div[1].findAll('iframe')[0]['src']
 
@@ -68,6 +82,7 @@ class scrapeDescriptions():
             matchObj = re.search('(.*)id=(.*)', href)
             ids.append(int(matchObj.group(2)))
 
+        # Gets club info using the IDs found
         orgNames = []
         orgInfo = []
         orgIds = []
@@ -96,10 +111,7 @@ class scrapeDescriptions():
             print(orgInfo[i])
             print(orgNames[i])
 
+        # Saves club info
         pickle.dump(orgInfo, open( "org_info.p", "wb" ))
         pickle.dump(orgNames, open( "org_names.p", "wb" ))
         pickle.dump(orgIds, open( "org_ids.p", "wb" ))
-
-# s = scrapeDescriptions()
-# s.getClubInfo()
-# s.get_concentration_info()

@@ -1,9 +1,16 @@
 import pickle
 import textComparison as tc
+from enchant.checker import SpellChecker
+from autocorrect import spell
 
 ## Helpers for friend recommendations
-# Calculates edit distance between two strings
 def levenshteinDistance(s1, s2):
+    """
+    Calculates edit distance between two strings
+    :param s1: First string
+    :param s2: Second string
+    :return: Edit distance between 's1' and 's2'
+    """
     if len(s1) > len(s2):
         s1, s2 = s2, s1
 
@@ -18,13 +25,22 @@ def levenshteinDistance(s1, s2):
         distances = distances_
     return distances[-1]
 
-# Finds closest string (by edit distance) from 'str' in 'list'
 def closeStringInList(str, list):
+    """
+    Finds closest string (by edit distance) from 'str' in 'list'
+    :param str: string to find closest term to
+    :param list: list to find closest string within
+    :return: Closest string in 'list' to 'str'
+    """
     distances = [levenshteinDistance(str, s) for s in list]
     return distances.index(min(distances))
 
 def preprocDescrip():
-    # Load lists
+    """
+    Calculates similarities between concentration and club descriptions for friend recommendations
+    :return:
+    """
+    # Load lists of descriptions
     concentrations = pickle.load(open("concentrations.p", "rb"))
     descr = pickle.load(open("concentrationDescr.p", "rb"))
 
@@ -36,23 +52,23 @@ def preprocDescrip():
         org = org.replace("harvard", "")
         orgInfo[i] = str(orgNames[i]).lower() + " " + str(org).lower()
 
+    # Calculate pairwise similarities
     orgInfoLists = tc.getSimilarityLists(orgInfo)
     concentrationLists = tc.getSimilarityLists(descr)
 
+    # Store results for future retrieval
     pickle.dump(orgInfoLists, open("orgInfoLists.p", "wb"))
     pickle.dump(concentrationLists, open("concentrationLists.p", "wb"))
 
 ## Helpers for event description translation
-from enchant.checker import SpellChecker
-from autocorrect import spell
-
-#perform spell correction
 def performSpellCorrection(text):
+    """
+    Autocorrects spelling
+    :param text: Input text to correct spelling for
+    :return: Text with spelling corrected
+    """
     checker = SpellChecker("en_US", text)
     for word in checker:
         word.replace(spell(word.word))
 
     return checker.get_text()
-
-# Tokenization, parts of speech tagging
-
