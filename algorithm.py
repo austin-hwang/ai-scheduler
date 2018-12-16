@@ -27,8 +27,7 @@ class BacktrackingSearch():
 
     def print_stats(self):
         if self.bestAssignment:
-            print "Found %d optimal assignments with weight %f in %d operations" % \
-                (self.numbestAssignments, self.optimalWeight, self.numOperations)
+            print "Found %d optimal assignments with weight %f in %d backtrack operations" % (self.numbestAssignments, self.optimalWeight, self.numOperations)
             print "First assignment took %d operations" % self.firstAssignmentNumOperations
             print "Best assignment: ", self.bestAssignment
         else:
@@ -255,7 +254,7 @@ class SA():
         dayOrTime = int(random.random() * 2)
         time = events[eventNum]
         shift = random.sample([-1, 1], 1)
-        if(dayOrTime == 0):
+        if dayOrTime == 0:
             newTime = ((time[dayOrTime] + shift[0]) % self.numDays, time[1])
         else:
             newTime = (time[0], (time[dayOrTime] + shift[0]) % self.dayLength)
@@ -299,7 +298,8 @@ class SA():
                     bestScore = highScore
                     bestEvents = assignList[index]
 
-        return bestScore
+        print "Found 1 optimal assignments with weight %f" % bestScore
+        print "Best Assignment: ", {bestEvents[0].index(x):self.getTimePeriodsInDuration(x, durations[bestEvents[0].index(x)]) for x in bestEvents[0]}
 
     def acceptBag(self, newVal, oldVal, T):
         # Accept if val is better

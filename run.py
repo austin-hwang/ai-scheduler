@@ -49,8 +49,7 @@ def localSearchEval():
                 csp = create_schedule(attendees, constraints, numDays=7, dayLength=24)
                 sa = algorithm.SA(csp)
                 start_time = time.time()
-                ret = sa.simulatedAnnealing(attendees, sampleNewEvents, durations)
-                print(ret)
+                sa.simulatedAnnealing(attendees, sampleNewEvents, durations)
                 print("--- %s seconds ---\n" % (time.time() - start_time))
                 attendees = []
                 constraints = []
