@@ -271,7 +271,6 @@ class SA():
 
     def solve(self, csp, people, sampleNewEvents, durations):
         """
-<<<<<<< HEAD
         Solves the CSP
         :param csp: input CSP
         :param people: list of people per event
@@ -280,35 +279,6 @@ class SA():
         :return:
         """
         # Initialize variables
-=======
-        Runs simulated annealing 
-            :param csp: current csp
-            :param people: list of events with people
-            :param sampleNewEvents: start with random sample
-            :param durations: list of durations
-        """  
->>>>>>> 942a7f8137bddce06ebaa8b48d34e508db04e255
-        self.csp = csp
-        self.numDays = csp.numDays
-        self.dayLength = csp.dayLength
-        self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
-
-        # Run simulated annealing
-        self.simulatedAnnealing(people, sampleNewEvents, durations)
-
-        # Calculate stats for final state found
-        self.print_stats()
-
-    def print_stats(self):
-        """
-<<<<<<< HEAD
-        Print stats of the assignment found
-        :return:
-        """
-=======
-        Print end results 
-        """   
->>>>>>> 942a7f8137bddce06ebaa8b48d34e508db04e255
         print "Found 1 optimal assignments with weight %f" % self.optimalWeight
         print "Best Assignment: ", self.bestAssignment
 

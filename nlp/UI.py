@@ -2,6 +2,7 @@ from tui import display, prompt, choice
 from readNewEventInfo import *
 from run import sampleNewEvents
 from datetime import datetime
+import readNewEventInfo
 import getFriendRecommendation
 import constraint
 import algorithm
@@ -51,7 +52,7 @@ def schedule():
     timesInput = []
     for i in range(minLen):
         timesInput.append((descr[2][0][i], descr[2][1][i]))
-        display('Time: ' + str(descr[2][0][i]) + ' | Date: ' + str(descr[2][1][i]))
+        display('Time: ' + str(descr[2][0][i][0]) + ":" + str(round(descr[2][0][i][1]/60.0), 2).zfill(2) + ' | Date: ' + str(descr[2][1][i]))
     timesCorrect = prompt("Input y/n: \n")
     if (timesCorrect == 'n'):
         timesInput = prompt(
@@ -110,7 +111,7 @@ def displayEvents():
         timesPrint = ["Time: " + str(t[0][0]) + ":00" + " | " + t[1] for t in times[i]]
         print("Preferred Times:\n" + "\n".join(timesPrint))
         cnt += 1
-        print("\n\n")
+        print("\n")
     raw_input("Press Enter to continue...")
 
 def readConstraints():
