@@ -6,7 +6,8 @@ from wordsToDates import *
 from run import sampleNewEvents
 from datetime import datetime
 import constraint
-import testFriendRecommendations
+import getFriendRecommendation
+import readNewEventInfo
 
 def schedule():
     """
@@ -21,7 +22,7 @@ def schedule():
     description = prompt("Description: ")
 
     # Parse description for people and event time
-    parser = readNewEventInfo()
+    parser = readNewEventInfo.readEventInfo()
     descr = parser.run(description)
 
     # Check if info is correct
@@ -59,7 +60,7 @@ def schedule():
         timesInput = prompt(
             "Input the correct date(s) and time(s), separated by commas. Ex. Tomorrow 12pm, Friday 1pm\n")
         timesInput = timesInput.split(',')
-        reader = readNewEventInfo()
+        reader = readNewEventInfo.readEventInfo()
         timesInput = [reader.parseTime(t.lower()) for t in timesInput]
         timesInput = [(t[0][0], t[1][0]) for t in timesInput]
 
@@ -120,7 +121,7 @@ def readConstraints():
     Reads default constraints for events from 'constraints.txt'
     :return: A list of constraints with people, days, and hours
     """
-    with open("constraints.txt") as file:
+    with open("nlp/constraints.txt") as file:
         data = file.readlines()
         constraints = []
         for lines in data:
@@ -189,7 +190,7 @@ def calcSchedule(people, times, duration):
         for t2 in t:
             d = datetime.strptime(str(t2[1]), '%Y-%m-%d') - datetime.today()
             diff.append(d.days)
-            varMap = csp.getVarMapping(people[i], [d.days + 1], range(t2[0][0], t2[0][0] + duration[i]), 100)
+            varMap = csp.getVarMapping(people[i], [d.days + 1], range(t2[0][0], t2[0][0] + duration[i]), 3)
             csp.updateScheduleWeights(varMap)
         daysDiff.append(diff)
 

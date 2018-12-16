@@ -3,7 +3,7 @@ from dateutil import parser
 from timex import *
 from helpers import *
 
-class readNewEventInfo():
+class readEventInfo():
     """
     Extracts event information from user input text
     """

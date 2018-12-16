@@ -13,6 +13,8 @@ nltk = "*"
 gensim = "*"
 pyenchant = "*"
 autocorrect = "*"
+pypl = "*"
+egenix-mx-base = "*"
 
 [requires]
 python_version = "2.7"
