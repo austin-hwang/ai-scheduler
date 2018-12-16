@@ -53,7 +53,7 @@ def schedule():
     if (peopleInput == ""):
         peopleInput = prompt("We didn't get your attendees. Who are they? \n")
     else:
-        peopleCorrect = prompt("Are you going with these people?: " + " ".join(descr[1]) + "(y/n)\n")
+        peopleCorrect = prompt("Are you going with these people?: " + " ".join(descr[1]) + " (y/n)\n")
         if (peopleCorrect == 'n'):
             peopleInput = prompt("Input the correct people's names separated by commas. ex. John, Sarah \n")
             peopleInput = [x.strip() for x in peopleInput.split(',')]

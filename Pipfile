@@ -15,6 +15,7 @@ pyenchant = "*"
 autocorrect = "*"
 pypl = "*"
 egenix-mx-base = "*"
+beautifulsoup = "*"
 
 [requires]
 python_version = "2.7"
