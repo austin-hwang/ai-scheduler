@@ -21,6 +21,7 @@ class CSP:
         self.eventConstraints = {}
         self.domain = []
 
+    # Add variables to CSP
     def add_variable(self, var, domain):
         if var not in self.variables:
             self.variables.append(var)
@@ -28,6 +29,7 @@ class CSP:
             self.domain = domain
             self.scheduleWeights[var] = domain
 
+    # Update the weights for the constraints
     def updateUnaryDomainVals(self, var, varMap):
         for key1 in varMap:
             for key2 in varMap[key1]:
