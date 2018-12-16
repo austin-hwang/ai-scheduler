@@ -5,13 +5,13 @@ probs = []
 class BacktrackingSearch():
     def __init__(self):
         self.bestAssignment = {}
-        self.allAssignments = []
         self.optimalWeight = 0
         self.numbestAssignments = 0
         self.numAssignments = 0
         self.numOperations = 0
         self.firstAssignmentNumOperations = 0
-        self.totalWeight = 0;
+        self.firstAssignment = {}
+        self.firstAssignmentWeight = 0
 
     def solve(self, csp, mcv, ac3, hwv, numEvents, events, duration):
         self.csp = csp
@@ -28,7 +28,7 @@ class BacktrackingSearch():
     def print_stats(self):
         if self.bestAssignment:
             print "Found %d optimal assignments with weight %f in %d backtrack operations" % (self.numbestAssignments, self.optimalWeight, self.numOperations)
-            print "First assignment took %d operations" % self.firstAssignmentNumOperations
+            print "First assignment has weight %f and took %d operations: " % (self.firstAssignmentWeight, self.firstAssignmentNumOperations), self.firstAssignment
             print "Best assignment: ", self.bestAssignment
         else:
             print "No solution was found."
@@ -49,7 +49,6 @@ class BacktrackingSearch():
         newAssignment = {}
         for event in self.csp.events.iteritems():
             newAssignment[event[0]] = assignment[event[0]]
-        self.allAssignments.append(newAssignment)
 
         if len(self.bestAssignment) == 0 or weight >= self.optimalWeight:
             if weight == self.optimalWeight:
@@ -59,9 +58,11 @@ class BacktrackingSearch():
             self.optimalWeight = weight
 
             self.bestAssignment = newAssignment
-            if self.firstAssignmentNumOperations == 0:
-                self.firstAssignmentNumOperations = self.numOperations
-        # print "Best Assignment: ", self.bestAssignment, self.optimalWeight
+            
+        if self.firstAssignmentNumOperations == 0:
+            self.firstAssignmentNumOperations = self.numOperations
+            self.firstAssignment = newAssignment
+            self.firstAssignmentWeight = weight
 
     def backtrack(self, assignment, numAssigned, weight):
         self.numOperations += 1
@@ -181,28 +182,23 @@ class BacktrackingSearch():
                             self.domains[i][day].pop(hour, None)
 # Simulated Annealing
 class SA():
-    def __init__(self, csp):
+    def __init__(self):
         self.bestAssignment = []
         self.optimalWeight = 0
-        self.numbestAssignments = 0
-        self.numAssignments = 0
         self.numOperations = 0
-        self.firstAssignmentNumOperations = 0
-        self.allAssignments = []
-        self.csp = csp
         self.conflictPairs = []
+
+    def solve(self, csp, people, sampleNewEvents, durations):
+        self.csp = csp
         self.numDays = csp.numDays
         self.dayLength = csp.dayLength
-
-    def solve(self, csp):
-        self.csp = csp
         self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
+        self.simulatedAnnealing(people, sampleNewEvents, durations)
         self.print_stats()
 
     def print_stats(self):
-        print "Found %d optimal assignments with weight %f in %d operations" % \
-            (self.numbestAssignments, self.optimalWeight, self.numOperations)
-        print "First assignment took %d operations" % self.firstAssignmentNumOperations
+        print "Found 1 optimal assignments with weight %f" % self.optimalWeight
+        print "Best Assignment: ", self.bestAssignment
 
     def num_conflicts(self, assignment, duration):
         events = assignment[0]
@@ -298,8 +294,8 @@ class SA():
                     bestScore = highScore
                     bestEvents = assignList[index]
 
-        print "Found 1 optimal assignments with weight %f" % bestScore
-        print "Best Assignment: ", {bestEvents[0].index(x):self.getTimePeriodsInDuration(x, durations[bestEvents[0].index(x)]) for x in bestEvents[0]}
+        self.optimalWeight = bestScore
+        self.bestAssignment = {bestEvents[0].index(x):self.getTimePeriodsInDuration(x, durations[bestEvents[0].index(x)]) for x in bestEvents[0]}
 
     def acceptBag(self, newVal, oldVal, T):
         # Accept if val is better

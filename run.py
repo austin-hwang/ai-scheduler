@@ -47,9 +47,9 @@ def localSearchEval():
                 print lines[13:]
             elif "end" in lines:
                 csp = create_schedule(attendees, constraints, numDays=7, dayLength=24)
-                sa = algorithm.SA(csp)
+                sa = algorithm.SA()
                 start_time = time.time()
-                sa.simulatedAnnealing(attendees, sampleNewEvents, durations)
+                sa.solve(csp, attendees, sampleNewEvents, durations)
                 print("--- %s seconds ---\n" % (time.time() - start_time))
                 attendees = []
                 constraints = []
@@ -89,9 +89,9 @@ def backtrackEval(heuristic=False):
             else:
                 constraints.append(lines.split(","))
 
-# print "--------------EVALUATING BACKTRACKING---------------"
-# backtrackEval()
-# print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
-# backtrackEval(heuristic=True)
-print "--------------EVALUATING LOCAL SEARCH---------------"
-localSearchEval()
+print "--------------EVALUATING BACKTRACKING---------------"
+backtrackEval()
+print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
+backtrackEval(heuristic=True)
+# print "--------------EVALUATING LOCAL SEARCH---------------"
+# localSearchEval()
