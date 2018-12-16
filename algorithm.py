@@ -64,6 +64,8 @@ class BacktrackingSearch():
 
     def backtrack(self, assignment, numAssigned, weight):
         self.numOperations += 1
+        if self.numOperations >= 1000000:
+            return
         if numAssigned == self.csp.numEvents:
             self.reset(assignment, weight)
         else:
@@ -85,7 +87,7 @@ class BacktrackingSearch():
                         assignment[event[0]] = copy.deepcopy(inDuration)
                         localCopy = copy.deepcopy(self.domains)
                         self.arc_consistency(event[0], assignment)
-                        self.backtrack(assignment, numAssigned + 1, weight * newWeight)
+                        self.backtrack(assignment, numAssigned + 1, weight + newWeight)
                         self.domains = localCopy
                     del assignment[event[0]]
                         

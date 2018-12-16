@@ -1,4 +1,4 @@
-import algorithm, json, random
+import algorithm, json, random, time
 
 class CSP:
     def __init__(self, numDays, dayLength):
@@ -11,6 +11,15 @@ class CSP:
         self.domain = []
         self.numDays = numDays
         self.dayLength = dayLength
+
+    def reset(self):
+        self.numEvents = 0
+        self.events = {}
+        self.variables = []
+        self.values = {}
+        self.scheduleWeights = {}
+        self.eventConstraints = {}
+        self.domain = []
 
     def add_variable(self, var, domain):
         if var not in self.variables:
@@ -55,7 +64,7 @@ class CSP:
                                 self.eventConstraints[event[0]].add((days[0], hours[0]))
 
 
-def create_schedule(people, numDays, dayLength):
+def create_schedule(people, constraints, numDays, dayLength):
     csp = CSP(numDays, dayLength)
     csp.numEvents = len(people)
     peopleFlat = [item for sublist in people for item in sublist]
@@ -72,31 +81,108 @@ def create_schedule(people, numDays, dayLength):
         csp.events[i] = val
 
     csp.eventConstraints = {e[0]: set() for e in csp.events.iteritems()}
-    # Set variable constraints
-    # varMap1 = csp.getVarMapping(['A', 'C', 'D'], [5], range(0, csp.dayLength), 20)
-    # varMap2 = csp.getVarMapping(['A'], range(csp.numDays), range(1,6), -10000)
-    varMap3 = csp.getVarMapping(['B'],[1], [6], 10000)
-    varMap4 = csp.getVarMapping(['G'],[2], [7], 10000)
-    varMap5 = csp.getVarMapping(['H'],[3], [8], 10000)
-    #varMap2 = csp.getVarMapping(['A', 'C', 'D'], range(0,6), range(11,3), 3)
-    # csp.updateScheduleWeights(varMap1)
-    # csp.updateScheduleWeights(varMap2)
-    csp.updateScheduleWeights(varMap3)
-    csp.updateScheduleWeights(varMap4)
-    csp.updateScheduleWeights(varMap5)
+    for c in constraints:
+        days = c[1].split(";")
+        hours = c[2].split(";")
+        varMap = csp.getVarMapping(list(c[0]), range(int(days[0]), int(days[1])+1), range(int(hours[0]), int(hours[1])+1), int(c[3]))
+        csp.updateScheduleWeights(varMap)
+
     csp.updateEventConstraints()
-    # print "Unary: ", json.dumps(csp.scheduleWeights, indent = 2)
     return csp
 
 def sampleNewEvents(numDays, numHours, numSample):
     return random.sample([(d, h) for d in range(numDays) for h in range(numHours)], numSample)
 
-# List of people
-events = [['A', 'B', 'C', 'G'], ['G', 'D', 'E', 'F'], ['A', 'G', 'H']]
-# events = [['A','C','D'], ['G', 'D', 'E', 'F']]
-# sa = algorithm.SA(create_schedule(events, numDays=7, dayLength=48))
-durations = [3, 2, 2]
-# ret = sa.simulatedAnnealing(events, sampleNewEvents, durations)
-# print(ret)
-bt = algorithm.BacktrackingSearch()
-bt.solve(create_schedule(events, numDays=4, dayLength=10), mcv=True, ac3=False, hwv=True, numEvents=len(events), events = events, duration=durations)
+def localSearchEval():
+    with open("test/test1.txt") as file:
+        data = file.readlines()
+        attendees = []
+        constraints = []
+        durations = []
+        for lines in data:
+            lines = lines.rstrip()
+            if "events" in lines:
+                for people in lines[8:].split(";"):
+                    attendees.append(people.split(" "))
+            elif "durations" in lines:
+                durations.extend(lines[11:].split(" "))
+                durations = [int(x) for x in durations]
+            elif "description" in lines:
+                print lines[13:]
+            elif "end" in lines:
+                csp = create_schedule(attendees, constraints, numDays=7, dayLength=24)
+                sa = algorithm.SA(csp)
+                start_time = time.time()
+                ret = sa.simulatedAnnealing(attendees, sampleNewEvents, durations)
+                print(ret)
+                print("--- %s seconds ---\n" % (time.time() - start_time))
+                attendees = []
+                constraints = []
+                durations = []
+            else:
+                constraints.append(lines.split(","))    
+
+def backtrackEval():
+    with open("test/test1.txt") as file:
+        data = file.readlines()
+        attendees = []
+        constraints = []
+        durations = []
+        for lines in data:
+            lines = lines.rstrip()
+            if "events" in lines:
+                for people in lines[8:].split(";"):
+                    attendees.append(people.split(" "))
+            elif "durations" in lines:
+                durations.extend(lines[11:].split(" "))
+                durations = [int(x) for x in durations]
+            elif "description" in lines:
+                print lines[13:]
+            elif "end" in lines:
+                bt = algorithm.BacktrackingSearch()
+                csp = create_schedule(attendees, constraints, numDays=7, dayLength=24)
+
+                start_time = time.time()
+                bt.solve(csp, mcv=True, ac3=False, hwv=True, numEvents=len(attendees), events=attendees, duration=durations)
+                print("--- %s seconds ---\n" % (time.time() - start_time))
+                attendees = []
+                constraints = []
+                durations = []
+            else:
+                constraints.append(lines.split(","))
+
+def acEval():
+    with open("test/test1.txt") as file:
+        data = file.readlines()
+        attendees = []
+        constraints = []
+        durations = []
+        for lines in data:
+            lines = lines.rstrip()
+            if "events" in lines:
+                for people in lines[8:].split(";"):
+                    attendees.append(people.split(" "))
+            elif "durations" in lines:
+                durations.extend(lines[11:].split(" "))
+                durations = [int(x) for x in durations]
+            elif "description" in lines:
+                print lines[13:]
+            elif "end" in lines:
+                bt = algorithm.BacktrackingSearch()
+                csp = create_schedule(attendees, constraints, numDays=7, dayLength=24)
+
+                start_time = time.time()
+                bt.solve(csp, mcv=True, ac3=True, hwv=True, numEvents=len(attendees), events=attendees, duration=durations)
+                print("--- %s seconds ---\n" % (time.time() - start_time))
+                attendees = []
+                constraints = []
+                durations = []
+            else:
+                constraints.append(lines.split(","))
+
+print "--------------EVALUATING BACKTRACKING---------------"
+backtrackEval()
+print "--------------EVALUATING BACKTRACKING WITH AC-3---------------"
+acEval()
+print "--------------EVALUATING LOCAL SEARCH---------------"
+localSearchEval()
