@@ -14,7 +14,7 @@ To run the testing suite:
 ```sh
 python run.py
 ```
-The console will output the following: 
+The console will output the text describing the test cases. Each text block takes the form of the following: 
 ```
 Tight contraints case
 Found 49 optimal assignments with weight 5.000000 in 57 backtrack operations
@@ -67,8 +67,7 @@ To run the interactive UI:
 ```
 python UI.py
 ```
-
-This will output:
+This will take some time to load. After the program loads, the console will output:
 ```
 Welcome to the scheduler!
 What's your name?
@@ -84,9 +83,9 @@ Type the number or the option:
 
 There are 5 options:
 
-1. Schedule an event by typing a sentence. Note that sentence parsing only has moderate robustness to diverse input so be cautious with input--or you can have fun and deliberately put in unexpected input!
+1. Schedule an event by typing a sentence. Don't input times more than 1 week ahead. Note that sentence parsing only has moderate robustness to diverse input so be cautious with input--or you can have fun and deliberately put in unexpected input! 
 2. Display available events to be scheduled
-3. Find a recommended time for events based on constraints defined by the participants' schedules in `nlp/constraints.txt`. This can still be run without inputting any events. This option uses simulated annealing to find the recommended assignment.
+3. Find a recommended time for events based on constraints defined by the participants' schedules in `nlp/constraints.txt`. This can still be run without inputting any events. This option uses simulated annealing to find the recommended assignment. 
 4. Find a friend recommendation based concentration and club
 5. Exit program
 
