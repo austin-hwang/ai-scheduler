@@ -243,7 +243,7 @@ def ground(tagged_text, base_date):
         elif(re.match(week_day, timex, re.IGNORECASE)):
             day = hashweekdays[timex.split()[0]]
             # If "this" weekday has already passed, go to next week
-            if (datetime.datetime.today().day > day):
+            if (datetime.datetime.today().weekday() > day):
                 timex_val = str(base_date + RelativeDateTime(weeks=1, \
                                                              weekday=(day, 0)))
             else:

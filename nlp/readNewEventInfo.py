@@ -108,7 +108,7 @@ class readEventInfo():
 
         # Date
         taggedLine = tag(text)
-        time = ground(taggedLine, gmt())
+        time = ground(taggedLine, localtime())
         try:
             matchObj = re.search(r'val(.*)(">?)', time, flags=0)
             matchObj = re.findall('"([^"]*)"', matchObj.group(0))

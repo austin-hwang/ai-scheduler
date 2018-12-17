@@ -30,12 +30,11 @@ def schedule():
     display("Checking if event description is correct.")
 
     # Confirm event name
-    eventName = "".join(descr[3]).capitalize()
-    if(eventName == ""):
+    eventInput = " ".join(descr[3]).capitalize()
+    if(eventInput == ""):
         eventInput = prompt("We didn't get your event name. What is it? \n")
     else:
-        eventCorrect = prompt("Is this your event name (y/n)?: " + "".join(eventName) + "\n")
-        eventInput = "".join(eventName)
+        eventCorrect = prompt("Is this your event name (y/n)?: " + eventInput + "\n")
         if (eventCorrect == 'n'):
             eventInput = prompt("Input the correct event name \n")
 
@@ -242,6 +241,8 @@ def initialize():
 
 ## UI
 if __name__== "__main__":
+    r = readNewEventInfo.readEventInfo()
+    r.parseTime("thursday at 1pm")
     # Initializes events
     eventNames, eventAttendees, duration, times = initialize()
 
