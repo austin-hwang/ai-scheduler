@@ -23,16 +23,16 @@ Best assignment:  {0: [(0, 13)], 1: [(4, 14)]}
 --- 0.00528478622437 seconds ---
 ```
 1. The first line represents the case being tested
-2. The second line lists the number of optimal assignments found and the optimal score
-3. The third line represents the first correct assignment found, its score, and assignment
-4. The fourth line represents the best assignment found
+2. The second line lists the number of optimal assignments found, the optimal score, and the number of operations to enumerate all possible assignments
+3. The third line represents the first correct assignment found, its score, and the assignment. 
+4. The fourth line represents the best assignment found determined by the weight of the assignment.
 5. The last line is the run-time. 
 
 The assignment output is formatted as such:
 
 `{Event #: [(Day #, Hour #)]}`
 
-The day range is generally from 0-6 to represent the days of the week and the hour range is 0-23 for 24 hours. If the event is more than one hour long, then the assignment will include the consecutive hours for that duration.
+The day range is generally from 0-6 to represent the days of the week and the hour range is 0-23 for 24 hours. If the event is more than one hour long, then the assignment will include the consecutive hours for that duration (e.g. "0: [(1, 2), (1, 3)]" for a 2 hour assignment).
 
 ## Additional Testing
 
@@ -57,7 +57,7 @@ end
     - The first parameter `A` is the person being targeted
     - The second `0;6` indicates the range of days the constraint will be applied. In this case, it is from days 0 to 6.
     - The third `0;12` indicates the range of hours the constraint will be applied. In this case, it is from hours 0 to 12.
-    - Finally  `0` indicates the weight of the constraint. Anything less than 0 is a schedule conflict that will be avoided. The more positive the number, the higher the preference towards scheduling around that time.
+    - Finally  `0` indicates the weight of the constraint. Anything less than or equal to 0 is a schedule conflict that will be avoided. The more positive the number, the higher the preference towards scheduling around that time.
 - The end word indicates the end of a test
 
 ## Console UI
@@ -84,10 +84,10 @@ Type the number or the option:
 
 There are 5 options:
 
-1. Schedule an event using NLP
-2. Display available events that are already scheduled 
-3. Find optimal time for events based on inputted textfile of a person's schedule in `nlp/constraints.txt`
-4. Recommend a friend based concentration and club
+1. Schedule an event by typing a sentence. Note that sentence parsing only has moderate robustness to diverse input so be cautious with input--or you can have fun and deliberately put in unexpected input!
+2. Display available events to be scheduled
+3. Find a recommended time for events based on constraints defined by the participants' schedules in `nlp/constraints.txt`. This can still be run without inputting any events. This option uses simulated annealing to find the recommended assignment.
+4. Find a friend recommendation based concentration and club
 5. Exit program
 
 ## Project Structure
