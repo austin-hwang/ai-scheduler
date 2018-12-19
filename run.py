@@ -87,12 +87,13 @@ def backtrackEval(heuristic=False, ac3=False):
                 durations = []
             else:
                 constraints.append(lines.split(","))
+                
 if __name__== "__main__":
-    # print "--------------EVALUATING BACKTRACKING---------------"
-    # backtrackEval()
-    # print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
-    # backtrackEval(heuristic=True)
-    # print "--------------EVALUATING BACKTRACKING WITH AC-3---------------"
-    # backtrackEval(heuristic=True, ac3=True)
+    print "--------------EVALUATING BACKTRACKING---------------"
+    backtrackEval()
+    print "--------------EVALUATING BACKTRACKING WITH HEURISTICS---------------"
+    backtrackEval(heuristic=True)
+    print "--------------EVALUATING BACKTRACKING WITH AC-3---------------"
+    backtrackEval(heuristic=True, ac3=True)
     print "--------------EVALUATING LOCAL SEARCH---------------"
     localSearchEval()

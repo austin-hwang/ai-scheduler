@@ -8,7 +8,10 @@ pip install pipenv
 pipenv shell --python 2.7
 pipenv install
 ```
-
+If running into installation permission problems, run:
+```
+/Applications/Python\ 2.7/Install\ Certificates.command
+```
 ## Testing Suite
 To run the testing suite:
 ```sh
@@ -62,8 +65,19 @@ end
 
 ## Console UI
 
-To run the interactive UI:
-
+To run the interactive UI a few more things need to be installed first:
+```
+python -m nltk.downloader all
+```
+If that doesn't work, then run this inside the python interpreter
+```
+>>> import nltk
+>>> nltk.download('punkt')
+>>> nltk.download('averaged_perceptron_tagger')
+>>> nltk.download('maxent_ne_chunker')
+>>> nltk.download('words')
+```
+To run the console UI:
 ```
 python UI.py
 ```
